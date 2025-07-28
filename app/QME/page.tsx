@@ -37,32 +37,31 @@ export default function EmailTemplate() {
   const generateId = () => Math.random().toString(36).substring(2, 9);
 
   const generateCallText = () => {
-    return `Called to Dr's office on PH: ${phoneNumber} s/w ${contactPerson}, requested to schedule the QME appointment for our Applicant ${applicantName} (Case #${caseNumber}) with Dr. ${doctorName} within 55-60 days from today's date, she gave me ${contactEmail} this email to send the panel strike and demographic to her office, I will be sending the email Shortly!`;
+    return `Called Dr.'s office on PH: ${phoneNumber} and spoke with ${contactPerson}. Requested to schedule the QME appointment for our applicant ${applicantName} with Dr. ${doctorName} within 55-60 days from today's date. They provided ${contactEmail} as the email address to send the panel strike and demographic information. I will be sending the email shortly!`;
   };
 
   const generateEmailText = () => {
-    return `Subject: QME Appointment Scheduling Request for ${applicantName} (Case #${caseNumber}) with Dr. ${doctorName}
+    return `Subject: QME Appointment Scheduling Request for ${applicantName} with Dr. ${doctorName}
 
 Hello,
 
-Hope you are doing well,
-Please see the attached Panel Strike and demographic for ${applicantName} (Case #${caseNumber}).
-I wanted to schedule the QME appointment for this applicant with Dr. ${doctorName}  
-within 55-60 days from today's date.
+I hope you are doing well.
+Please find attached the Panel Strike and demographic information for ${applicantName}.
+I would like to schedule the QME appointment for this applicant with Dr. ${doctorName} within 55-60 days from today's date.
 ${
   interpreterRequired
-    ? "We also need a Spanish Interpreter for this QME."
-    : "As applicant speaks and understands English we don't need an interpreter for QME."
+    ? "We will also require a Spanish interpreter for this QME."
+    : "As the applicant speaks and understands English, an interpreter will not be necessary for the QME."
 }
 
-Please let me know if you need anything from my end.
+Please let me know if you require anything further from my end.
 
-Thanks,
+Thank you,
 Aditya`;
   };
 
   const generateNoteText = () => {
-    return `QME Request sent to Dr's office for ${applicantName} (Case #${caseNumber}) with Dr. ${doctorName} within 55-60 days along with panel strike and demographic via email, I will be waiting for the response on it.`;
+    return `QME request sent to Dr.'s office for ${applicantName} with Dr. ${doctorName} within 55-60 days, along with panel strike and demographic information via email. Awaiting their response.`;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
