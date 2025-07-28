@@ -1,0 +1,410 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { californiaAreas, CityData } from "../Utils/californiaData";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+
+type ExcelRow = {
+  "ZIP Code": string;
+  Address: string;
+  City: string;
+  County: string;
+  Region: string;
+  "Added On": string;
+};
+
+export default function Zip() {
+  // State for ZIP code search functionality
+  const [zipCode, setZipCode] = useState<string>("");
+  const [address, setAddress] = useState<string>("");
+  const [results, setResults] = useState<CityData[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [showOthers, setShowOthers] = useState<boolean>(false);
+  const [useAddressInput, setUseAddressInput] = useState<boolean>(false);
+
+  // State for Excel management
+  const [excelData, setExcelData] = useState<ExcelRow[]>([]);
+  const [showExcelPanel, setShowExcelPanel] = useState<boolean>(false);
+  const [fileName, setFileName] = useState<string>("California_Zip_Data.xlsx");
+
+  // Load saved data from localStorage when component mounts
+  useEffect(() => {
+    const savedData = localStorage.getItem("californiaZipData");
+    if (savedData) {
+      setExcelData(JSON.parse(savedData));
+    }
+  }, []);
+
+  // Save data to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("californiaZipData", JSON.stringify(excelData));
+  }, [excelData]);
+
+  const allCities: CityData[] = [
+    ...californiaAreas["Incorporated Cities"],
+    ...californiaAreas["Census-Designated Places (CDP)"],
+  ];
+
+  const validateZipCode = (zip: string): boolean => {
+    const zipRegex = /^\d{5}$/;
+    return zipRegex.test(zip);
+  };
+
+  const extractZipFromAddress = (addr: string): string | null => {
+    const zipMatch = addr.match(/\b\d{5}\b/);
+    return zipMatch ? zipMatch[0] : null;
+  };
+
+  const findCityByZip = (): void => {
+    setError(null);
+    setResults([]);
+    setShowOthers(false);
+
+    let currentZip = zipCode;
+
+    if (useAddressInput) {
+      const extractedZip = extractZipFromAddress(address);
+      if (!extractedZip) {
+        setError("No valid 5-digit ZIP code found in the address");
+        return;
+      }
+      currentZip = extractedZip;
+    }
+
+    if (!validateZipCode(currentZip)) {
+      setError("Please enter a valid 5-digit ZIP code");
+      return;
+    }
+
+    const matched = allCities.filter((city) =>
+      city.zipCodes.includes(currentZip)
+    );
+
+    const seen = new Set<string>();
+    const uniqueResults: CityData[] = [];
+
+    for (let i = matched.length - 1; i >= 0; i--) {
+      const city = matched[i];
+      if (!seen.has(city.city)) {
+        seen.add(city.city);
+        uniqueResults.unshift(city);
+      }
+    }
+
+    if (uniqueResults.length > 0) {
+      setResults(uniqueResults);
+      setZipCode(currentZip);
+    } else {
+      setError("ZIP code not found in our California database");
+    }
+  };
+
+  const addToExcel = (cityData: CityData[]) => {
+    const newRows: ExcelRow[] = cityData.map((city) => ({
+      "ZIP Code": zipCode,
+      Address: useAddressInput ? address : "",
+      City: city.city,
+      County: city.county,
+      Region: city.region,
+      "Added On": new Date().toLocaleString(),
+    }));
+
+    setExcelData((prev) => [...prev, ...newRows]);
+    setShowExcelPanel(true);
+  };
+
+  const addAllResults = () => {
+    addToExcel(results);
+  };
+
+  const addSingleResult = (cityData: CityData) => {
+    addToExcel([cityData]);
+  };
+
+  const downloadExcel = () => {
+    if (excelData.length === 0) {
+      setError("No data to export");
+      return;
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "ZipCodeData");
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+
+    const data = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    saveAs(data, fileName);
+  };
+
+  const clearExcelData = () => {
+    if (confirm("Are you sure you want to clear all Excel data?")) {
+      setExcelData([]);
+    }
+  };
+
+  const handleAddressInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setAddress(e.target.value);
+    setUseAddressInput(true);
+    setResults([]);
+    setError(null);
+  };
+
+  const handleZipInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setZipCode(e.target.value);
+    setUseAddressInput(false);
+    setResults([]);
+    setError(null);
+  };
+
+  const lastCity = results.length > 0 ? results[results.length - 1] : null;
+  const otherCities = results.slice(0, -1);
+
+  return (
+    <div className="min-h-screen flex">
+      {/* Main Content */}
+      <div className="flex-1 p-4 bg-gray-50">
+        <div className="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md">
+          <h1 className="text-2xl font-bold mb-6 text-center">
+            California ZIP Code Finder
+          </h1>
+
+          {!useAddressInput && (
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Enter ZIP Code:
+              </label>
+              <input
+                type="text"
+                value={zipCode}
+                onChange={handleZipInputChange}
+                placeholder="e.g., 90210"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                maxLength={5}
+              />
+            </div>
+          )}
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Or enter full address:
+            </label>
+            <input
+              type="text"
+              value={address}
+              onChange={handleAddressInputChange}
+              placeholder="e.g., Mr. John Smith, 123 Main Street, Anytown, CA 91234"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <button
+            onClick={findCityByZip}
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            Find Location
+          </button>
+
+          {error && <p className="mt-4 text-red-500 text-center">{error}</p>}
+
+          {results.length > 0 && (
+            <div className="mt-4 flex justify-between items-center">
+              <button
+                onClick={addAllResults}
+                className="bg-green-600 text-white py-1 px-3 rounded text-sm"
+              >
+                Add All to Excel
+              </button>
+              <button
+                onClick={() => setShowExcelPanel(true)}
+                className="text-blue-600 hover:underline text-sm"
+              >
+                View Excel Data ({excelData.length})
+              </button>
+            </div>
+          )}
+
+          {lastCity && (
+            <div className="mt-6">
+              <div className="p-4 bg-blue-50 rounded-md border border-blue-200 relative">
+                <button
+                  onClick={() => addSingleResult(lastCity)}
+                  className="absolute top-2 right-2 bg-green-600 text-white p-1 rounded-md hover:bg-green-700 transition duration-200 text-xs"
+                  title="Add to Excel"
+                >
+                  Add
+                </button>
+
+                {useAddressInput && (
+                  <div className="mb-3">
+                    <span className="text-sm text-gray-600">Address: </span>
+                    <span className="font-medium text-gray-700">{address}</span>
+                  </div>
+                )}
+                <div className="mb-3">
+                  <span className="text-sm text-gray-600">Region: </span>
+                  <span className="font-bold text-blue-800">
+                    {lastCity.region} California
+                  </span>
+                </div>
+                <div className="mb-2">
+                  <span className="text-sm text-gray-600">City: </span>
+                  <span className="font-medium text-gray-700">
+                    {lastCity.city}
+                  </span>
+                </div>
+                <div className="mb-3">
+                  <span className="text-sm text-gray-600">County: </span>
+                  <span className="font-medium text-gray-700">
+                    {lastCity.county}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-sm text-gray-600">ZIP Code: </span>
+                  <span className="font-medium text-gray-700">{zipCode}</span>
+                </div>
+              </div>
+
+              {otherCities.length > 0 && (
+                <div className="mt-4">
+                  <button
+                    onClick={() => setShowOthers(!showOthers)}
+                    className="text-blue-600 hover:underline"
+                  >
+                    {showOthers
+                      ? "Hide"
+                      : "Show Other Cities Associated with this Zip"}
+                  </button>
+
+                  {showOthers && (
+                    <div className="mt-4 space-y-4">
+                      {otherCities.map((city, index) => (
+                        <div
+                          key={index}
+                          className="p-4 bg-gray-100 rounded-md border border-gray-300 relative"
+                        >
+                          <button
+                            onClick={() => addSingleResult(city)}
+                            className="absolute top-2 right-2 bg-green-600 text-white p-1 rounded-md hover:bg-green-700 transition duration-200 text-xs"
+                            title="Add to Excel"
+                          >
+                            Add
+                          </button>
+
+                          <div className="mb-2">
+                            <span className="text-sm text-gray-600">
+                              City:{" "}
+                            </span>
+                            <span className="font-medium text-gray-700">
+                              {city.city}
+                            </span>
+                          </div>
+                          <div className="mb-2">
+                            <span className="text-sm text-gray-600">
+                              County:{" "}
+                            </span>
+                            <span className="font-medium text-gray-700">
+                              {city.county}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-sm text-gray-600">
+                              Region:
+                            </span>
+                            <span className="font-medium text-gray-700">
+                              {city.region} California
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Excel Panel */}
+      {showExcelPanel && (
+        <div className="w-80 bg-white border-l border-gray-200 p-4 overflow-y-auto fixed right-0 top-0 bottom-0 shadow-lg">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-bold">Excel Data Collection</h2>
+            <button
+              onClick={() => setShowExcelPanel(false)}
+              className="text-gray-500 hover:text-gray-700 text-xl"
+            >
+              &times;
+            </button>
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1">Filename:</label>
+            <input
+              type="text"
+              value={fileName}
+              onChange={(e) => setFileName(e.target.value)}
+              className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 mb-4">
+            <button
+              onClick={downloadExcel}
+              className="bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 transition"
+              disabled={excelData.length === 0}
+            >
+              Download Excel
+            </button>
+            <button
+              onClick={clearExcelData}
+              className="bg-red-100 text-red-700 py-2 px-4 rounded hover:bg-red-200 transition"
+              disabled={excelData.length === 0}
+            >
+              Clear Data
+            </button>
+          </div>
+
+          <div className="border-t pt-4">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="font-medium">Collected Data</h3>
+              <span className="text-sm text-gray-500">
+                {excelData.length} entries
+              </span>
+            </div>
+
+            <div className="text-sm space-y-2 max-h-96 overflow-y-auto">
+              {excelData.length === 0 ? (
+                <p className="text-gray-500 text-center py-4">
+                  No data collected yet
+                </p>
+              ) : (
+                excelData.map((row, i) => (
+                  <div key={i} className="p-3 border rounded hover:bg-gray-50">
+                    <div className="flex justify-between">
+                      <span className="font-medium">{row.City}</span>
+                      <span className="text-xs text-gray-500">
+                        {row["Added On"]}
+                      </span>
+                    </div>
+                    <div className="text-xs text-gray-600 mt-1">
+                      {row["ZIP Code"]} • {row.County}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

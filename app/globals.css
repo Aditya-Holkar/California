@@ -1,0 +1,54 @@
+:root {
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --success: #16a34a;
+  --success-hover: #15803d;
+  --danger: #ef4444;
+  --danger-hover: #dc2626;
+  --text: #374151;
+  --text-light: #6b7280;
+  --border: #e5e7eb;
+  --background: #f9fafb;
+  --card-bg: #ffffff;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Scrollbar Styles */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+a {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background-color: #0070f3;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+
+a:hover {
+  background-color: #005bb5;
+}
+
+br {
+  margin-bottom: 1rem;
+  display: block;
+  content: "";
+}

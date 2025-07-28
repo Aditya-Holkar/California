@@ -1,0 +1,30 @@
+.container {
+  font-family: Arial, sans-serif;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  line-height: 1.6;
+  color: #333;
+  text-align: center;
+}
+
+.link {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background-color: #0070f3;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+
+.link:hover {
+  background-color: #005bb5;
+}
+
+.lineBreak {
+  margin-bottom: 1rem;
+  display: block;
+  content: "";
+}
