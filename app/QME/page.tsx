@@ -37,7 +37,7 @@ export default function EmailTemplate() {
   const generateId = () => Math.random().toString(36).substring(2, 9);
 
   const generateCallText = () => {
-    return `Called Dr.'s office on PH: **${phoneNumber} and spoke with ${contactPerson}**. Requested to schedule the **QME appointment for our applicant ${applicantName} with Dr. ${doctorName} within 55-60 days from today's date**. They provided **${contactEmail}** as the email address to send the panel strike and demographic information. **I will be sending the email shortly!**`;
+    return `Called Dr.'s office on PH: ${phoneNumber} and spoke with ${contactPerson}. Requested to schedule the QME appointment for our applicant ${applicantName} with Dr. ${doctorName} within 55-60 days from today's date. They provided ${contactEmail} as the email address to send the panel strike and demographic information. I will be sending the email shortly!`;
   };
 
   const generateEmailText = () => {
@@ -46,12 +46,12 @@ export default function EmailTemplate() {
 Hello,
 
 I hope you are doing well.
-Please find attached the Panel Strike and demographic for **${applicantName}**.
-I would like to schedule the QME appointment for this applicant with **Dr. ${doctorName} within 55-60 days from today's date**.
+Please find attached the Panel Strike and demographic for ${applicantName}.
+I would like to schedule the QME appointment for this applicant with Dr. ${doctorName} within 55-60 days from today's date.
 ${
   interpreterRequired
-    ? "**We will also require a Spanish interpreter for this QME.**"
-    : "**As the applicant speaks and understands English, an interpreter will not be necessary for the QME.**"
+    ? "We will also require a Spanish interpreter for this QME."
+    : "As the applicant speaks and understands English, an interpreter will not be necessary for the QME."
 }
 
 Please let me know if you require anything further from my end.
@@ -61,7 +61,7 @@ Aditya`;
   };
 
   const generateNoteText = () => {
-    return `**QME request sent** to Dr.'s office for **${applicantName} with Dr. ${doctorName}** within 55-60 days, along with panel strike and demographic information via email. Awaiting their response.`;
+    return `QME request sent to Dr.'s office for ${applicantName} with Dr. ${doctorName} within 55-60 days, along with panel strike and demographic information via email. Awaiting their response.`;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
