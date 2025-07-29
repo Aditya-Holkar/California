@@ -71,13 +71,23 @@ export default function Zip() {
   ];
 
   const validateZipCode = (zip: string): boolean => {
-    const zipRegex = /^\d{5}$/;
+    const zipRegex = /^\d{5}(-\d{4})?$/;
     return zipRegex.test(zip);
   };
 
   const extractZipFromAddress = (addr: string): string | null => {
-    const zipMatch = addr.match(/\b\d{5}\b/);
-    return zipMatch ? zipMatch[0] : null;
+    // Trim and clean the address
+    const cleanAddr = addr.trim();
+
+    // First try to find ZIP+4 at the end (5 digits, hyphen, 4 digits)
+    const zipPlus4Match = cleanAddr.match(/(\b\d{5}-\d{4}\b)[^\d]*$/);
+    if (zipPlus4Match) {
+      return zipPlus4Match[1].split("-")[0]; // Return just the first 5 digits
+    }
+
+    // Then try standard 5-digit ZIP at the end
+    const zipMatch = cleanAddr.match(/(\b\d{5}\b)[^\d]*$/);
+    return zipMatch ? zipMatch[1] : null;
   };
 
   const extractNameFromInput = (
@@ -115,11 +125,14 @@ export default function Zip() {
     if (searchMode === "address") {
       const extractedZip = extractZipFromAddress(fullAddress);
       if (!extractedZip) {
-        setError("No valid 5-digit ZIP code found in the address");
+        setError("No valid ZIP code found in the address");
         return;
       }
       currentZip = extractedZip;
     }
+
+    // Strip any ZIP+4 suffix if present
+    currentZip = currentZip.split("-")[0];
 
     if (!validateZipCode(currentZip)) {
       setError("Please enter a valid 5-digit ZIP code");
@@ -321,39 +334,19 @@ export default function Zip() {
     setCaseNumber(e.target.value);
   };
 
-  // // Find the first result that's in the True list
-  // const preferredCity = results.find((city) =>
-  //   californiaAreas["True list"].some(
-  //     (trueCity) =>
-  //       trueCity.city === city.city && trueCity.county === city.county
-  //   )
-  // );
-
-  // const trueListResults = preferredCity ? [preferredCity] : [];
-  // const otherResults = preferredCity
-  //   ? results.filter(
-  //       (city) =>
-  //         city.city !== preferredCity.city ||
-  //         city.county !== preferredCity.county
-  //     )
-  //   : [...results]; // If no preferred city, all results go to otherResults
-
-  // 1. First - add priority levels to each result
   const prioritizedResults = results.map((city) => ({
     city,
     priority: californiaAreas["True list"].some(
       (t) => t.city === city.city && t.county === city.county
     )
       ? 1
-      : 0, // 1 = True list, 0 = others
+      : 0,
   }));
 
-  // 2. Sort by priority (highest first), then by city name
   prioritizedResults.sort(
     (a, b) => b.priority - a.priority || a.city.city.localeCompare(b.city.city)
   );
 
-  // 3. Extract final groupings
   const trueListResults =
     prioritizedResults.length > 0 ? [prioritizedResults[0].city] : [];
 
@@ -448,9 +441,9 @@ export default function Zip() {
                       type="text"
                       value={zipCode}
                       onChange={handleZipInputChange}
-                      placeholder="e.g., 90210"
+                      placeholder="e.g., 90210 or 90210-1234"
                       className={styles.input}
-                      maxLength={5}
+                      maxLength={10}
                     />
                   </div>
                   <div className={styles.inputGroup}>
@@ -493,7 +486,7 @@ export default function Zip() {
                     type="text"
                     value={fullAddress}
                     onChange={handleAddressInputChange}
-                    placeholder="e.g., John Smith, 123 Main Street, Anytown, CA 91234"
+                    placeholder="e.g., John Smith, 123 Main Street, Anytown, CA 91234 or 91234-1234"
                     className={styles.input}
                   />
                   {name && (
@@ -548,7 +541,7 @@ export default function Zip() {
                   >
                     Add
                   </button>
-                  <div className={styles.trueListBadge}>Preffered Choice</div>
+                  <div className={styles.trueListBadge}>Preferred Choice</div>
 
                   {name && (
                     <div className={styles.smallText}>
