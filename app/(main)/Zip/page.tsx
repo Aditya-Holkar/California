@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { californiaAreas, CityData } from "../Utils/californiaData";
+import { californiaAreas, CityData } from "../../Utils/californiaData";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
-import styles from "../styles/Zip.module.css";
+import styles from "../../styles/Zip.module.css";
 
 type ExcelRow = {
   "ZIP Code": string;

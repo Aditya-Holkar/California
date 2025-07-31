@@ -1,0 +1,80 @@
+/* Scheduled QME Panel Styles */
+.scheduledPanel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 90%;
+  max-width: 1200px;
+  height: 100vh;
+  background: white;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  padding: 20px;
+  overflow-y: auto;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+}
+
+.scheduledPanel.show {
+  transform: translateX(0);
+}
+
+.scheduledContent {
+  display: flex;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.scheduledForm {
+  flex: 1;
+  max-width: 400px;
+}
+
+.scheduledRecords {
+  flex: 2;
+}
+
+.searchContainer {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.searchInput {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.toggleScheduledButton {
+  position: fixed;
+  bottom: 100px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #4caf50;
+  color: white;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  z-index: 999;
+}
+
+.toggleScheduledButton.active {
+  background: #f44336;
+}
+
+.textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  min-height: 100px;
+  resize: vertical;
+}

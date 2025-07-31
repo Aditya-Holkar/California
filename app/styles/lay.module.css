@@ -1,0 +1,85 @@
+/* Main container */
+.container {
+  display: flex;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Toggle Button */
+.toggleButton {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 100;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #4f46e5;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.toggleButton:hover {
+  background-color: #eef2ff;
+}
+
+/* Left Rail */
+.rail {
+  width: 200px;
+  background: white;
+  padding: 1rem;
+  border-right: 1px solid #e2e8f0;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  transform: translateX(0);
+  transition: transform 0.3s ease;
+  z-index: 90;
+  padding-top: 4rem;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+}
+
+.rail.collapsed {
+  transform: translateX(-100%);
+}
+
+/* Rail Tabs */
+.railTabs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.railTab {
+  padding: 0.75rem 1rem;
+  font-weight: 500;
+  color: #475569;
+  text-decoration: none;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.railTab:hover {
+  background-color: #f1f5f9;
+  color: #4f46e5;
+}
+
+.railTabActive {
+  background-color: #eef2ff;
+  color: #4f46e5;
+  font-weight: 600;
+}
+
+/* Main Content */
+.mainContent {
+  flex: 1;
+  padding: 2rem;
+  padding-left: calc(200px + 2rem);
+  transition: padding-left 0.3s ease;
+}
+
+.rail.collapsed ~ .mainContent {
+  padding-left: 2rem;
+}

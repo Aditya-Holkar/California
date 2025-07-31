@@ -1,21 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useLocalStorage } from "../hooks/useLocalStorage";
-import styles from "../styles/Qme.module.css";
+import { useLocalStorage } from "../../../hooks/useLocalStorage";
+import styles from "../../../styles/Qme.module.css";
 import * as XLSX from "xlsx";
-
-interface QmeRecord {
-  id: string;
-  date: string;
-  caseNumber: string;
-  applicantName: string;
-  doctorName: string;
-  phoneNumber: string;
-  interpreterRequired: boolean;
-  contactPerson: string;
-  contactEmail: string;
-}
+// import ScheduledQmePanel from "../components/ScheduledQmePanel";
+import { QmeRecord } from "../../../Utils/qme";
 
 export default function EmailTemplate() {
   const [applicantName, setApplicantName] = useState("");
@@ -56,8 +46,8 @@ ${
 
 Please let me know if you require anything further from my end.
 
-Thank you,
-Aditya`;
+
+`;
   };
 
   const generateNoteText = () => {
