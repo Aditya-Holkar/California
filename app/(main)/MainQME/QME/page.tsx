@@ -21,7 +21,7 @@ export default function EmailTemplate() {
   );
   const [isCopied, setIsCopied] = useState("");
   const [activeTab, setActiveTab] = useState<"call" | "email" | "note">("call");
-  const [editingId, setEditingId] = useState<string | null>(null);
+  // const [editingId, setEditingId] = useState<string | null>(null);
   const [showRecordsPanel, setShowRecordsPanel] = useState(false);
 
   const generateId = () => Math.random().toString(36).substring(2, 9);
@@ -63,7 +63,7 @@ Please let me know if you require anything further from my end.
     }
 
     const newRecord: QmeRecord = {
-      id: editingId || generateId(),
+      id: generateId(), // Always generate new ID
       date: new Date().toISOString().split("T")[0],
       caseNumber,
       applicantName,
@@ -74,17 +74,8 @@ Please let me know if you require anything further from my end.
       contactEmail,
     };
 
-    if (editingId) {
-      setSavedRecords(
-        savedRecords.map((record) =>
-          record.id === editingId ? newRecord : record
-        )
-      );
-      setEditingId(null);
-    } else {
-      setSavedRecords([...savedRecords, newRecord]);
-    }
-
+    // Always add as new record
+    setSavedRecords([...savedRecords, newRecord]);
     resetForm();
   };
 
@@ -98,17 +89,17 @@ Please let me know if you require anything further from my end.
     setInterpreterRequired(true);
   };
 
-  // const handleEdit = (record: QmeRecord) => {
-  //   setApplicantName(record.applicantName);
-  //   setDoctorName(record.doctorName);
-  //   setPhoneNumber(record.phoneNumber);
-  //   setContactPerson(record.contactPerson);
-  //   setContactEmail(record.contactEmail);
-  //   setCaseNumber(record.caseNumber);
-  //   setInterpreterRequired(record.interpreterRequired);
-  //   setEditingId(record.id);
-  //   window.scrollTo({ top: 0, behavior: "smooth" });
-  // };
+  const handleEdit = (record: QmeRecord) => {
+    setApplicantName(record.applicantName);
+    setDoctorName(record.doctorName);
+    setPhoneNumber(record.phoneNumber);
+    setContactPerson(record.contactPerson);
+    setContactEmail(record.contactEmail);
+    setCaseNumber(record.caseNumber);
+    setInterpreterRequired(record.interpreterRequired);
+    // setEditingId(record.id);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   // const handleDelete = (id: string) => {
   //   if (confirm("Are you sure you want to delete this record?")) {
@@ -255,20 +246,20 @@ Please let me know if you require anything further from my end.
             type="submit"
             className={`${styles.button} ${styles.buttonPrimary}`}
           >
-            {editingId ? "Update Record" : "Save Record"}
+            Save Record {/* Changed from conditional text */}
           </button>
-          {editingId && (
-            <button
-              type="button"
-              onClick={() => {
-                setEditingId(null);
-                resetForm();
-              }}
-              className={`${styles.button} ${styles.buttonCancel}`}
-            >
-              Cancel Edit
-            </button>
-          )}
+          {/* {editingId && ( */}
+          <button
+            type="button"
+            onClick={() => {
+              // setEditingId(null);
+              resetForm();
+            }}
+            className={`${styles.button} ${styles.buttonCancel}`}
+          >
+            Cancel Edit
+          </button>
+          {/* )} */}
         </div>
       </form>
 
@@ -401,12 +392,12 @@ Please let me know if you require anything further from my end.
                       <td>{record.doctorName}</td>
                       <td>{record.interpreterRequired ? "Yes" : "No"}</td>
                       <td className={styles.actionsCell}>
-                        {/* <button
+                        <button
                           onClick={() => handleEdit(record)}
                           className={`${styles.button} ${styles.buttonEdit}`}
                         >
                           Edit
-                        </button> */}
+                        </button>
                         {/* <button
                           onClick={() => handleDelete(record.id)}
                           className={`${styles.button} ${styles.buttonDelete}`}
