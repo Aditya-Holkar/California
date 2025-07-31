@@ -40,6 +40,7 @@ export default function ViewQmeData({
     useState<ExtendedQmeRecord | null>(null);
   const [editData, setEditData] = useState<Partial<ExtendedQmeRecord>>({});
   const [showSidePanel, setShowSidePanel] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Migrate old records to new format
   const migrateRecords = (oldRecords: any[]): ExtendedQmeRecord[] => {
@@ -212,6 +213,14 @@ export default function ViewQmeData({
   const handleRecordClick = (record: ExtendedQmeRecord) => {
     setSelectedRecord(record);
     setEditData({
+      date: record.date,
+      caseNumber: record.caseNumber,
+      applicantName: record.applicantName,
+      doctorName: record.doctorName,
+      phoneNumber: record.phoneNumber,
+      contactPerson: record.contactPerson,
+      contactEmail: record.contactEmail,
+      interpreterRequired: record.interpreterRequired,
       scheduled: record.scheduled,
       address: record.address,
       appointmentDate: record.appointmentDate,
@@ -222,8 +231,11 @@ export default function ViewQmeData({
   };
 
   // Handle edit changes
-  const handleEditChange = (field: keyof ExtendedQmeRecord, value: string) => {
-    setEditData((prev) => ({ ...prev, [field]: value }));
+  const handleEditChange = (field: keyof ExtendedQmeRecord, value: any) => {
+    setEditData((prev) => ({
+      ...prev,
+      [field]: field === "interpreterRequired" ? value === "Yes" : value,
+    }));
   };
 
   // Save edited data
@@ -238,51 +250,52 @@ export default function ViewQmeData({
     setSelectedRecord({ ...selectedRecord, ...editData });
   };
 
+  // Delete record
+  const handleDelete = () => {
+    if (!selectedRecord) return;
+
+    const updatedRecords = records.filter(
+      (record) => record.id !== selectedRecord.id
+    );
+    setRecords(updatedRecords);
+    setShowSidePanel(false);
+    setShowDeleteConfirm(false);
+  };
+
   // Generate email template
   const generateEmailTemplate = () => {
     if (!selectedRecord) return "";
 
+    const recordToUse = { ...selectedRecord, ...editData };
     const arrivalTime = calculateArrivalTime(
-      editData.appointmentTime || selectedRecord.appointmentTime,
-      editData.hoursBeforeArrival || selectedRecord.hoursBeforeArrival
+      recordToUse.appointmentTime,
+      recordToUse.hoursBeforeArrival
     );
 
     return `Subject: QME Notice Received for ${
-      selectedRecord.applicantName
-    } - Dr. ${selectedRecord.doctorName} – ${
-      editData.appointmentDate || selectedRecord.appointmentDate
-    }
+      recordToUse.applicantName
+    } - Dr. ${recordToUse.doctorName} – ${recordToUse.appointmentDate}
 
 Dear Daniel,
 
 I hope you're doing well.
 
-Please find attached the QME notice for ${
-      selectedRecord.applicantName
-    } with Dr. ${
-      selectedRecord.doctorName
+Please find attached the QME notice for ${recordToUse.applicantName} with Dr. ${
+      recordToUse.doctorName
     }. The appointment has been scheduled with the following details:
 
-Date & Time: ${
-      editData.appointmentDate || selectedRecord.appointmentDate
-    } at ${formatTime(
-      editData.appointmentTime || selectedRecord.appointmentTime
+Date & Time: ${recordToUse.appointmentDate} at ${formatTime(
+      recordToUse.appointmentTime
     )}
 
 Arrival Time: ${formatTime(arrivalTime)} (${
-      editData.hoursBeforeArrival || selectedRecord.hoursBeforeArrival
-    } hour${
-      parseFloat(
-        editData.hoursBeforeArrival || selectedRecord.hoursBeforeArrival
-      ) !== 1
-        ? "s"
-        : ""
-    } before)
+      recordToUse.hoursBeforeArrival
+    } hour${parseFloat(recordToUse.hoursBeforeArrival) !== 1 ? "s" : ""} before)
 
-Address: ${editData.address || selectedRecord.address}
+Address: ${recordToUse.address}
 
 I will proceed to update the calendar for this case as per the notice and add Dr. ${
-      selectedRecord.doctorName
+      recordToUse.doctorName
     }'s information in the Parties section.
 
 If you have any questions or need further adjustments, Please let me know.`;
@@ -505,6 +518,90 @@ If you have any questions or need further adjustments, Please let me know.`;
 
           <div className={styles.editForm}>
             <div className={styles.formGroup}>
+              <label>Date:</label>
+              <input
+                type="date"
+                value={editData.date || ""}
+                onChange={(e) => handleEditChange("date", e.target.value)}
+              />
+            </div>
+
+            <div className={styles.formGroup}>
+              <label>Case Number:</label>
+              <input
+                type="text"
+                value={editData.caseNumber || ""}
+                onChange={(e) => handleEditChange("caseNumber", e.target.value)}
+              />
+            </div>
+
+            <div className={styles.formGroup}>
+              <label>Applicant Name:</label>
+              <input
+                type="text"
+                value={editData.applicantName || ""}
+                onChange={(e) =>
+                  handleEditChange("applicantName", e.target.value)
+                }
+              />
+            </div>
+
+            <div className={styles.formGroup}>
+              <label>Doctor Name:</label>
+              <input
+                type="text"
+                value={editData.doctorName || ""}
+                onChange={(e) => handleEditChange("doctorName", e.target.value)}
+              />
+            </div>
+
+            <div className={styles.formGroup}>
+              <label>Phone Number:</label>
+              <input
+                type="text"
+                value={editData.phoneNumber || ""}
+                onChange={(e) =>
+                  handleEditChange("phoneNumber", e.target.value)
+                }
+              />
+            </div>
+
+            <div className={styles.formGroup}>
+              <label>Contact Person:</label>
+              <input
+                type="text"
+                value={editData.contactPerson || ""}
+                onChange={(e) =>
+                  handleEditChange("contactPerson", e.target.value)
+                }
+              />
+            </div>
+
+            <div className={styles.formGroup}>
+              <label>Contact Email:</label>
+              <input
+                type="email"
+                value={editData.contactEmail || ""}
+                onChange={(e) =>
+                  handleEditChange("contactEmail", e.target.value)
+                }
+              />
+            </div>
+
+            <div className={styles.formGroup}>
+              <label>Interpreter Required:</label>
+              <select
+                value={editData.interpreterRequired ? "Yes" : "No"}
+                onChange={(e) =>
+                  handleEditChange("interpreterRequired", e.target.value)
+                }
+              >
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+              </select>
+            </div>
+
+            <div className={styles.formGroup}>
               <label>Scheduled:</label>
               <select
                 value={editData.scheduled || "No"}
@@ -551,10 +648,7 @@ If you have any questions or need further adjustments, Please let me know.`;
                 }
               />
               <small>
-                Display:{" "}
-                {formatTime(
-                  editData.appointmentTime || selectedRecord.appointmentTime
-                )}
+                Display: {formatTime(editData.appointmentTime || "")}
               </small>
             </div>
 
@@ -573,17 +667,24 @@ If you have any questions or need further adjustments, Please let me know.`;
                 Arrival Time:{" "}
                 {formatTime(
                   calculateArrivalTime(
-                    editData.appointmentTime || selectedRecord.appointmentTime,
-                    editData.hoursBeforeArrival ||
-                      selectedRecord.hoursBeforeArrival
+                    editData.appointmentTime || "",
+                    editData.hoursBeforeArrival || "1"
                   )
                 )}
               </small>
             </div>
 
-            <button onClick={handleSave} className={styles.saveButton}>
-              Save Changes
-            </button>
+            <div className={styles.buttonGroup}>
+              <button onClick={handleSave} className={styles.saveButton}>
+                Save Changes
+              </button>
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className={styles.deleteButton}
+              >
+                Delete Record
+              </button>
+            </div>
           </div>
 
           <div className={styles.emailTemplate}>
@@ -599,6 +700,33 @@ If you have any questions or need further adjustments, Please let me know.`;
             >
               Copy Email to Clipboard
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.confirmationModal}>
+            <h4>Confirm Deletion</h4>
+            <p>
+              Are you sure you want to delete this record for{" "}
+              {selectedRecord?.applicantName}?
+            </p>
+            <div className={styles.modalButtons}>
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className={styles.cancelButton}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                className={styles.confirmDeleteButton}
+              >
+                Delete
+              </button>
+            </div>
           </div>
         </div>
       )}

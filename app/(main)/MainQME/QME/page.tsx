@@ -98,23 +98,23 @@ Please let me know if you require anything further from my end.
     setInterpreterRequired(true);
   };
 
-  const handleEdit = (record: QmeRecord) => {
-    setApplicantName(record.applicantName);
-    setDoctorName(record.doctorName);
-    setPhoneNumber(record.phoneNumber);
-    setContactPerson(record.contactPerson);
-    setContactEmail(record.contactEmail);
-    setCaseNumber(record.caseNumber);
-    setInterpreterRequired(record.interpreterRequired);
-    setEditingId(record.id);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  // const handleEdit = (record: QmeRecord) => {
+  //   setApplicantName(record.applicantName);
+  //   setDoctorName(record.doctorName);
+  //   setPhoneNumber(record.phoneNumber);
+  //   setContactPerson(record.contactPerson);
+  //   setContactEmail(record.contactEmail);
+  //   setCaseNumber(record.caseNumber);
+  //   setInterpreterRequired(record.interpreterRequired);
+  //   setEditingId(record.id);
+  //   window.scrollTo({ top: 0, behavior: "smooth" });
+  // };
 
-  const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to delete this record?")) {
-      setSavedRecords(savedRecords.filter((record) => record.id !== id));
-    }
-  };
+  // const handleDelete = (id: string) => {
+  //   if (confirm("Are you sure you want to delete this record?")) {
+  //     setSavedRecords(savedRecords.filter((record) => record.id !== id));
+  //   }
+  // };
 
   const copyToClipboard = (type: "call" | "email" | "note") => {
     let text = "";
@@ -401,18 +401,18 @@ Please let me know if you require anything further from my end.
                       <td>{record.doctorName}</td>
                       <td>{record.interpreterRequired ? "Yes" : "No"}</td>
                       <td className={styles.actionsCell}>
-                        <button
+                        {/* <button
                           onClick={() => handleEdit(record)}
                           className={`${styles.button} ${styles.buttonEdit}`}
                         >
                           Edit
-                        </button>
-                        <button
+                        </button> */}
+                        {/* <button
                           onClick={() => handleDelete(record.id)}
                           className={`${styles.button} ${styles.buttonDelete}`}
                         >
                           Delete
-                        </button>
+                        </button> */}
                       </td>
                     </tr>
                   ))}
