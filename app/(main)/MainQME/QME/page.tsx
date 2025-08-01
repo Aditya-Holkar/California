@@ -50,6 +50,9 @@ Please let me know if you require anything further from my end.
 `;
   };
 
+  const [viewingRecord, setViewingRecord] = useState<QmeRecord | null>(null);
+  // Remove any edit-related states like editingId
+
   const generateNoteText = () => {
     return `QME request sent to Dr.'s office for ${applicantName} with Dr. ${doctorName} within 55-60 days, along with panel strike and demographic information via email. Awaiting their response.`;
   };
@@ -77,6 +80,7 @@ Please let me know if you require anything further from my end.
     // Always add as new record
     setSavedRecords([...savedRecords, newRecord]);
     resetForm();
+    // setViewingRecords(true);
   };
 
   const resetForm = () => {
@@ -87,19 +91,21 @@ Please let me know if you require anything further from my end.
     setContactEmail("");
     setCaseNumber("");
     setInterpreterRequired(true);
+    setViewingRecord(null);
   };
 
-  const handleEdit = (record: QmeRecord) => {
-    setApplicantName(record.applicantName);
-    setDoctorName(record.doctorName);
-    setPhoneNumber(record.phoneNumber);
-    setContactPerson(record.contactPerson);
-    setContactEmail(record.contactEmail);
-    setCaseNumber(record.caseNumber);
-    setInterpreterRequired(record.interpreterRequired);
-    // setEditingId(record.id);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  // const handleEdit = (record: QmeRecord) => {
+  //   setApplicantName(record.applicantName);
+  //   setDoctorName(record.doctorName);
+  //   setPhoneNumber(record.phoneNumber);
+  //   setContactPerson(record.contactPerson);
+  //   setContactEmail(record.contactEmail);
+  //   setCaseNumber(record.caseNumber);
+  //   setInterpreterRequired(record.interpreterRequired);
+  //   // setEditingId(record.id);
+  //   setViewingRecords(false); // Add this line
+  //   window.scrollTo({ top: 0, behavior: "smooth" });
+  // };
 
   // const handleDelete = (id: string) => {
   //   if (confirm("Are you sure you want to delete this record?")) {
@@ -152,6 +158,7 @@ Please let me know if you require anything further from my end.
             onChange={(e) => setCaseNumber(e.target.value)}
             className={styles.input}
             required
+            readOnly={!!viewingRecord}
           />
         </div>
 
@@ -166,6 +173,7 @@ Please let me know if you require anything further from my end.
             onChange={(e) => setApplicantName(e.target.value)}
             className={styles.input}
             required
+            readOnly={!!viewingRecord}
           />
         </div>
 
@@ -180,6 +188,7 @@ Please let me know if you require anything further from my end.
             onChange={(e) => setDoctorName(e.target.value)}
             className={styles.input}
             required
+            readOnly={!!viewingRecord}
           />
         </div>
 
@@ -194,6 +203,7 @@ Please let me know if you require anything further from my end.
             onChange={(e) => setPhoneNumber(e.target.value)}
             className={styles.input}
             required
+            readOnly={!!viewingRecord}
           />
         </div>
 
@@ -208,6 +218,7 @@ Please let me know if you require anything further from my end.
             onChange={(e) => setContactPerson(e.target.value)}
             className={styles.input}
             required
+            readOnly={!!viewingRecord}
           />
         </div>
 
@@ -222,6 +233,7 @@ Please let me know if you require anything further from my end.
             onChange={(e) => setContactEmail(e.target.value)}
             className={styles.input}
             required
+            readOnly={!!viewingRecord}
           />
         </div>
 
@@ -233,6 +245,7 @@ Please let me know if you require anything further from my end.
                 type="checkbox"
                 checked={interpreterRequired}
                 onChange={(e) => setInterpreterRequired(e.target.checked)}
+                readOnly={!!viewingRecord}
               />
               <span className={styles.checkboxLabel}>
                 Spanish Interpreter Needed
@@ -242,24 +255,25 @@ Please let me know if you require anything further from my end.
         </div>
 
         <div className={styles.buttonGroup}>
-          <button
-            type="submit"
-            className={`${styles.button} ${styles.buttonPrimary}`}
-          >
-            Save Record {/* Changed from conditional text */}
-          </button>
-          {/* {editingId && ( */}
-          <button
-            type="button"
-            onClick={() => {
-              // setEditingId(null);
-              resetForm();
-            }}
-            className={`${styles.button} ${styles.buttonCancel}`}
-          >
-            Cancel Edit
-          </button>
-          {/* )} */}
+          {!viewingRecord ? (
+            <button
+              type="submit"
+              className={`${styles.button} ${styles.buttonPrimary}`}
+            >
+              Save Record
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                resetForm();
+                setViewingRecord(null);
+              }}
+              className={`${styles.button} ${styles.buttonCancel}`}
+            >
+              Cancel
+            </button>
+          )}
         </div>
       </form>
 
@@ -392,18 +406,32 @@ Please let me know if you require anything further from my end.
                       <td>{record.doctorName}</td>
                       <td>{record.interpreterRequired ? "Yes" : "No"}</td>
                       <td className={styles.actionsCell}>
-                        <button
-                          onClick={() => handleEdit(record)}
-                          className={`${styles.button} ${styles.buttonEdit}`}
-                        >
-                          Edit
-                        </button>
                         {/* <button
-                          onClick={() => handleDelete(record.id)}
-                          className={`${styles.button} ${styles.buttonDelete}`}
-                        >
-                          Delete
-                        </button> */}
+            onClick={() => handleEdit(record)}
+            className={`${styles.button} ${styles.buttonEdit}`}
+          >
+            Edit
+          </button> */}
+                        <td className={styles.actionsCell}>
+                          <button
+                            onClick={() => {
+                              setApplicantName(record.applicantName);
+                              setDoctorName(record.doctorName);
+                              setPhoneNumber(record.phoneNumber);
+                              setContactPerson(record.contactPerson);
+                              setContactEmail(record.contactEmail);
+                              setCaseNumber(record.caseNumber);
+                              setInterpreterRequired(
+                                record.interpreterRequired
+                              );
+                              setViewingRecord(record);
+                              window.scrollTo({ top: 0, behavior: "smooth" });
+                            }}
+                            className={`${styles.button} ${styles.buttonView}`}
+                          >
+                            View
+                          </button>
+                        </td>
                       </td>
                     </tr>
                   ))}

@@ -41,6 +41,13 @@ export default function ViewQmeData({
   const [editData, setEditData] = useState<Partial<ExtendedQmeRecord>>({});
   const [showSidePanel, setShowSidePanel] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importOption, setImportOption] = useState<"replace" | "merge">(
+    "merge"
+  );
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportSelected, setExportSelected] = useState<boolean>(false);
 
   // Migrate old records to new format
   const migrateRecords = (oldRecords: any[]): ExtendedQmeRecord[] => {
@@ -308,10 +315,97 @@ If you have any questions or need further adjustments, Please let me know.`;
     alert("Email template copied to clipboard!");
   };
 
+  // Handle file upload
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImportFile(file);
+      setShowImportModal(true);
+    }
+  };
+
+  // Process imported Excel file
+  const processImportedFile = () => {
+    if (!importFile) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const data = new Uint8Array(e.target?.result as ArrayBuffer);
+      const workbook = XLSX.read(data, { type: "array" });
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+
+      const importedRecords = jsonData.map((item: any) => {
+        // Map Excel columns to our record format
+        return {
+          id: generateId(),
+          date: item["Date"] || "",
+          caseNumber: item["Case Number"] || "",
+          applicantName: item["Applicant Name"] || "",
+          doctorName: item["Doctor Name"] || "",
+          phoneNumber: item["Phone Number"] || "",
+          contactPerson: item["Contact Person"] || "",
+          contactEmail: item["Contact Email"] || "",
+          interpreterRequired: item["Interpreter Required"] === "Yes",
+          scheduled: (item["Scheduled"] || "No") as ScheduledStatus,
+          address: item["Address"] || "",
+          appointmentDate: item["Appointment Date"] || "",
+          appointmentTime: item["Appointment Time"]
+            ? convertTo24Hour(item["Appointment Time"].split(" ")[0])
+            : "",
+          hoursBeforeArrival: item["Hours Before Arrival"] || "1",
+        };
+      });
+
+      if (importOption === "replace") {
+        setRecords(importedRecords);
+      } else {
+        // Merge with existing records
+        const mergedRecords = [...records, ...importedRecords];
+        // Remove duplicates based on case number and applicant name
+        const uniqueRecords = mergedRecords.filter(
+          (record, index, self) =>
+            index ===
+            self.findIndex(
+              (r) =>
+                r.caseNumber === record.caseNumber &&
+                r.applicantName === record.applicantName
+            )
+        );
+        setRecords(uniqueRecords);
+      }
+
+      setShowImportModal(false);
+      setImportFile(null);
+    };
+    reader.readAsArrayBuffer(importFile);
+  };
+
+  // Convert 12-hour time to 24-hour format
+  const convertTo24Hour = (timeStr: string) => {
+    if (!timeStr) return "";
+
+    const [time, period] = timeStr.split(" ");
+    // eslint-disable-next-line prefer-const
+    let [hours, minutes] = time.split(":");
+
+    if (period === "PM" && hours !== "12") {
+      hours = String(parseInt(hours, 10) + 12);
+    } else if (period === "AM" && hours === "12") {
+      hours = "00";
+    }
+
+    return `${hours}:${minutes}`;
+  };
+
   // Export to Excel
   const exportToExcel = () => {
+    // Determine which records to export
+    const recordsToExport =
+      exportSelected && selectedRecord ? [selectedRecord] : records;
+
     // Prepare data with all fields
-    const excelData = records.map((record) => {
+    const excelData = recordsToExport.map((record) => {
       const arrivalTime = calculateArrivalTime(
         record.appointmentTime,
         record.hoursBeforeArrival
@@ -357,6 +451,15 @@ If you have any questions or need further adjustments, Please let me know.`;
     worksheet["!cols"] = Object.keys(excelData[0]).map(() => ({ width: 20 }));
 
     XLSX.writeFile(workbook, "QME_Records.xlsx");
+    setShowExportModal(false);
+  };
+
+  // Clear all records
+  const clearAllRecords = () => {
+    if (confirm("Are you sure you want to clear all records?")) {
+      setRecords([]);
+      localStorage.removeItem(STORAGE_KEY);
+    }
   };
 
   return (
@@ -397,9 +500,9 @@ If you have any questions or need further adjustments, Please let me know.`;
                       setSearchTerm(suggestion);
                       setShowSuggestions(false);
                     }}
-                    className={styles.suggestionItem}
+                    className={styles.suggestionItems}
                   >
-                    {suggestion}
+                    {/* {suggestion} */}
                   </li>
                 ))}
               </ul>
@@ -439,9 +542,26 @@ If you have any questions or need further adjustments, Please let me know.`;
           </div>
         </div>
 
-        <button onClick={exportToExcel} className={styles.exportButton}>
-          Export to Excel
-        </button>
+        <div className={styles.actionButtons}>
+          <label className={styles.importButton}>
+            Import Excel
+            <input
+              type="file"
+              accept=".xlsx, .xls"
+              onChange={handleFileUpload}
+              style={{ display: "none" }}
+            />
+          </label>
+          <button
+            onClick={() => setShowExportModal(true)}
+            className={styles.exportButton}
+          >
+            Export to Excel
+          </button>
+          <button onClick={clearAllRecords} className={styles.clearButton}>
+            Clear All
+          </button>
+        </div>
       </div>
 
       <div className={styles.dataTableContainer}>
@@ -725,6 +845,101 @@ If you have any questions or need further adjustments, Please let me know.`;
                 className={styles.confirmDeleteButton}
               >
                 Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Import Modal */}
+      {showImportModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.importModal}>
+            <h4>Import Excel File</h4>
+            <p>Selected file: {importFile?.name}</p>
+
+            <div className={styles.importOptions}>
+              <label>
+                <input
+                  type="radio"
+                  name="importOption"
+                  value="replace"
+                  checked={importOption === "replace"}
+                  onChange={() => setImportOption("replace")}
+                />
+                Replace all existing records
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="importOption"
+                  value="merge"
+                  checked={importOption === "merge"}
+                  onChange={() => setImportOption("merge")}
+                />
+                Merge with existing records (duplicates will be removed)
+              </label>
+            </div>
+
+            <div className={styles.modalButtons}>
+              <button
+                onClick={() => {
+                  setShowImportModal(false);
+                  setImportFile(null);
+                }}
+                className={styles.cancelButton}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={processImportedFile}
+                className={styles.confirmButton}
+              >
+                Import
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Export Modal */}
+      {showExportModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.exportModal}>
+            <h4>Export to Excel</h4>
+
+            <div className={styles.exportOptions}>
+              <label>
+                <input
+                  type="radio"
+                  name="exportOption"
+                  checked={!exportSelected}
+                  onChange={() => setExportSelected(false)}
+                />
+                Export all records
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="exportOption"
+                  checked={exportSelected}
+                  onChange={() => setExportSelected(true)}
+                  disabled={!selectedRecord}
+                />
+                Export selected record only
+                {!selectedRecord && " (No record selected)"}
+              </label>
+            </div>
+
+            <div className={styles.modalButtons}>
+              <button
+                onClick={() => setShowExportModal(false)}
+                className={styles.cancelButton}
+              >
+                Cancel
+              </button>
+              <button onClick={exportToExcel} className={styles.confirmButton}>
+                Export
               </button>
             </div>
           </div>

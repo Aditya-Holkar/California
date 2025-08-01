@@ -52,3 +52,17 @@ br {
   display: block;
   content: "";
 }
+
+input:read-only {
+  background-color: #f5f5f5;
+  border-color: #ddd;
+}
+
+input[type="checkbox"] {
+  cursor: pointer;
+}
+
+/* For indeterminate checkbox state */
+input[type="checkbox"]:indeterminate {
+  background-color: #ccc;
+}
