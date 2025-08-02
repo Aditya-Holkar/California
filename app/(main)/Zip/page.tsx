@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -11,6 +12,7 @@ type ExcelRow = {
   Name: string;
   "Case Name": string;
   "Case #": string;
+  "Case Status": string;
   Address?: string;
   City: string;
   County: string;
@@ -26,6 +28,7 @@ export default function Zip() {
   const [name, setName] = useState<string>("");
   const [caseName, setCaseName] = useState<string>("");
   const [caseNumber, setCaseNumber] = useState<string>("");
+  const [caseStatus, setCaseStatus] = useState<string>("");
   const [results, setResults] = useState<CityData[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [showOthers, setShowOthers] = useState<boolean>(false);
@@ -36,6 +39,7 @@ export default function Zip() {
   const [tempName, setTempName] = useState<string>("");
   const [tempCaseName, setTempCaseName] = useState<string>("");
   const [tempCaseNumber, setTempCaseNumber] = useState<string>("");
+  const [tempCaseStatus, setTempCaseStatus] = useState<string>("");
   const [excelData, setExcelData] = useState<ExcelRow[]>([]);
   const [showExcelPanel, setShowExcelPanel] = useState<boolean>(false);
   const [fileName, setFileName] = useState<string>("California_Zip_Data.xlsx");
@@ -187,6 +191,7 @@ export default function Zip() {
       setTempName(name);
       setTempCaseName(caseName);
       setTempCaseNumber(caseNumber);
+      setTempCaseStatus(caseStatus);
     }
     setShowNamePrompt(true);
   };
@@ -198,6 +203,8 @@ export default function Zip() {
         Name: tempName,
         "Case Name": searchMode === "zip" ? tempCaseName : "",
         "Case #": tempCaseNumber,
+        // "Case Status": searchMode === "zip" ? tempCaseStatus : "", // Added Case Status
+        "Case Status": tempCaseStatus, // Added Case Status
         City: currentCityToAdd.city,
         County: currentCityToAdd.county,
         Region: currentCityToAdd.region,
@@ -240,6 +247,8 @@ export default function Zip() {
         Name: tempName,
         "Case Name": searchMode === "zip" ? tempCaseName : "",
         "Case #": tempCaseNumber,
+        // "Case Status": searchMode === "zip" ? tempCaseStatus : "", // Added Case Status
+        "Case Status": tempCaseStatus, // Added Case Status
         City: city.city,
         County: city.county,
         Region: city.region,
@@ -274,29 +283,27 @@ export default function Zip() {
       return;
     }
 
-    const dataToExport = excelData.map((row) => {
-      if (searchMode === "zip") {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { Address, ...rest } = row;
-        return rest;
-      }
-      return row;
-    });
+    // Prepare data with all required fields
+    const dataToExport = excelData.map((row) => ({
+      "ZIP Code": row["ZIP Code"],
+      Name: row["Name"],
+      "Case Name": row["Case Name"],
+      "Case #": row["Case #"],
+      "Case Status": row["Case Status"], // Ensure Case Status is included
+      City: row["City"],
+      County: row["County"],
+      Region: row["Region"],
+      "Added On": row["Added On"],
+      ...(row.Address && { Address: row.Address }), // Conditionally include Address
+    }));
 
+    // Create worksheet and workbook
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "ZipCodeData");
 
-    const excelBuffer = XLSX.write(workbook, {
-      bookType: "xlsx",
-      type: "array",
-    });
-
-    const data = new Blob([excelBuffer], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
-
-    saveAs(data, fileName);
+    // Generate Excel file and trigger download
+    XLSX.writeFile(workbook, fileName);
   };
 
   const clearExcelData = () => {
@@ -387,6 +394,28 @@ export default function Zip() {
                 className={styles.input}
               />
             </div>
+            <div className={styles.inputGroup}>
+              <label className={styles.label}>Case Status:</label>
+              <input
+                type="text"
+                value={caseStatus}
+                onChange={(e) => setCaseStatus(e.target.value)}
+                placeholder="Enter case status"
+                className={styles.input}
+              />
+            </div>
+
+            {searchMode === "zip" && (
+              <div className={styles.inputGroup}>
+                <label className={styles.label}>Case Status:</label>
+                <input
+                  type="text"
+                  value={tempCaseStatus}
+                  onChange={(e) => setTempCaseStatus(e.target.value)}
+                  className={styles.input}
+                />
+              </div>
+            )}
             <div className={styles.modalButtons}>
               <button
                 onClick={() => {
@@ -424,12 +453,12 @@ export default function Zip() {
               >
                 Search by ZIP Code Only
               </button>
-              <button
+              {/* <button
                 onClick={() => setSearchMode("address")}
                 className={styles.searchOptionButton}
               >
                 Search by Full Address
-              </button>
+              </button> */}
             </div>
           ) : (
             <>
@@ -476,10 +505,20 @@ export default function Zip() {
                       className={styles.input}
                     />
                   </div>
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>Case Status:</label>
+                    <input
+                      type="text"
+                      value={caseStatus}
+                      onChange={(e) => setCaseStatus(e.target.value)}
+                      placeholder="Enter case status"
+                      className={styles.input}
+                    />
+                  </div>
                 </>
               )}
 
-              {searchMode === "address" && (
+              {/* {searchMode === "address" && (
                 <div className={styles.inputGroup}>
                   <label className={styles.label}>Enter full address:</label>
                   <input
@@ -496,7 +535,7 @@ export default function Zip() {
                     </div>
                   )}
                 </div>
-              )}
+              )} */}
 
               <button onClick={findCityByZip} className={styles.button}>
                 Find Location
@@ -510,6 +549,7 @@ export default function Zip() {
                   setName("");
                   setCaseName("");
                   setCaseNumber("");
+                  setCaseStatus("");
                   setResults([]);
                   setError(null);
                 }}
@@ -597,8 +637,8 @@ export default function Zip() {
                 className={styles.toggleButton}
               >
                 {showOthers
-                  ? "Hide Other Cities"
-                  : `Show Other Cities (${otherResults.length})`}
+                  ? "Hide Result"
+                  : `Show Other Result for this city (${otherResults.length})`}
               </button>
 
               {showOthers && (
@@ -705,9 +745,9 @@ export default function Zip() {
                 excelData.map((row, i) => (
                   <div key={i} className={styles.dataItem}>
                     <div className={styles.dataItemHeader}>
-                      <span className={styles.mediumText}>
+                      {/* <span className={styles.mediumText}>
                         {row.Name || "No name"}
-                      </span>
+                      </span> */}
                       {searchMode === "zip" && row["Case Name"] && (
                         <span className={styles.mediumText}>
                           {row["Case Name"]}
@@ -718,9 +758,9 @@ export default function Zip() {
                           {row["Case #"]}
                         </span>
                       )}
-                      <span className={styles.dataItemMeta}>
+                      {/* <span className={styles.dataItemMeta}>
                         {row["Added On"]}
-                      </span>
+                      </span> */}
                       <button
                         onClick={() => {
                           setExcelData((prev) =>
