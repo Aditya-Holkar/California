@@ -1,0 +1,30 @@
+# Dependency directories
+node_modules/
+vendor/
+.pnpm/
+.next/
+.next
+# Environment files
+.env
+.env.local
+.env*.local
+
+# Build/output directories
+dist/
+build/
+out/
+*.exe
+*.dll
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS/Editor files
+.DS_Store       # macOS
+.idea/          # JetBrains IDE
+.vscode/        # VS Code
+*.swp           # Vim swap files
+
+# Temporary files
+*.tmp

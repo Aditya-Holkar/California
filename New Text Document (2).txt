@@ -1,0 +1,752 @@
+i have :-
+
+ "Incorporated Cities": [
+    {
+      city: "Adelanto",
+      county: "San Bernardino",
+      region: "Southern",
+      zipCodes: ["92301"],
+    },
+    {
+      city: "Agoura Hills",
+      county: "Los Angeles",
+      region: "Southern",
+      zipCodes: ["91301", "91376", "91377"],
+    },
+],
+
+
+"Census-Designated Places (CDP)": [
+    {
+      city: "Acton",
+      county: "Los Angeles",
+      region: "Southern",
+      zipCodes: ["93510"],
+    },
+    {
+      city: "Agua Dulce",
+      county: "Los Angeles",
+      region: "Southern",
+      zipCodes: ["91350"],
+    },
+],
+
+"True list": [
+    {
+      city: "Acampo",
+      county: "San Joaquin",
+      region: "Northern",
+      zipCodes: ["95220"],
+    },
+    {
+      city: "Acton",
+      county: "Los Angeles",
+      region: "Southern",
+      zipCodes: ["93510"],
+    },
+    {
+      city: "Adelaide",
+      county: "San Luis Obispo",
+      region: "Central",
+      zipCodes: ["93421"],
+    },
+]
+this
+and now i have  
+
+"use client";
+
+import { useState, useEffect } from "react";
+import { californiaAreas, CityData } from "../Utils/californiaData";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+import styles from "../styles/Zip.module.css";
+
+type ExcelRow = {
+  "ZIP Code": string;
+  Name: string;
+  "Case Name": string;
+  "Case #": string; // Case number goes here
+  Address?: string; // Address remains separate
+  City: string;
+  County: string;
+  Region: string;
+  "Added On": string;
+};
+
+export default function Zip() {
+  // State for search mode and input
+  const [searchMode, setSearchMode] = useState<"zip" | "address" | null>(null);
+  const [zipCode, setZipCode] = useState<string>("");
+  const [fullAddress, setFullAddress] = useState<string>("");
+  const [address, setAddress] = useState<string>("");
+  const [name, setName] = useState<string>("");
+  const [caseName, setCaseName] = useState<string>("");
+  const [caseNumber, setCaseNumber] = useState<string>("");
+  const [results, setResults] = useState<CityData[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [showOthers, setShowOthers] = useState<boolean>(false);
+  const [showNamePrompt, setShowNamePrompt] = useState<boolean>(false);
+  const [currentCityToAdd, setCurrentCityToAdd] = useState<CityData | null>(
+    null
+  );
+  const [tempName, setTempName] = useState<string>("");
+  const [tempCaseName, setTempCaseName] = useState<string>("");
+  const [tempCaseNumber, setTempCaseNumber] = useState<string>("");
+  const [excelData, setExcelData] = useState<ExcelRow[]>([]);
+  const [showExcelPanel, setShowExcelPanel] = useState<boolean>(false);
+  const [fileName, setFileName] = useState<string>("California_Zip_Data.xlsx");
+
+  // Load saved data from localStorage when component mounts
+  useEffect(() => {
+    const savedData = localStorage.getItem("californiaZipData");
+    if (savedData) {
+      setExcelData(JSON.parse(savedData));
+    }
+  }, []);
+
+  // Save data to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("californiaZipData", JSON.stringify(excelData));
+  }, [excelData]);
+
+  const allCities: CityData[] = [
+    ...californiaAreas["Incorporated Cities"],
+    ...californiaAreas["Census-Designated Places (CDP)"],
+  ];
+
+  const validateZipCode = (zip: string): boolean => {
+    const zipRegex = /^\d{5}$/;
+    return zipRegex.test(zip);
+  };
+
+  const extractZipFromAddress = (addr: string): string | null => {
+    const zipMatch = addr.match(/\b\d{5}\b/);
+    return zipMatch ? zipMatch[0] : null;
+  };
+
+  const extractNameFromInput = (
+    input: string
+  ): { name: string; address: string } => {
+    const commaIndex = input.indexOf(",");
+    if (commaIndex > 0) {
+      return {
+        name: input.substring(0, commaIndex).trim(),
+        address: input.substring(commaIndex + 1).trim(),
+      };
+    }
+
+    const words = input.trim().split(/\s+/);
+    if (words.length > 2) {
+      return {
+        name: words.slice(0, 8).join(" "),
+        address: words.slice(8).join(" "),
+      };
+    }
+
+    return {
+      name: input,
+      address: "",
+    };
+  };
+
+  const findCityByZip = (): void => {
+    setError(null);
+    setResults([]);
+    setShowOthers(false);
+
+    let currentZip = zipCode;
+
+    if (searchMode === "address") {
+      const extractedZip = extractZipFromAddress(fullAddress);
+      if (!extractedZip) {
+        setError("No valid 5-digit ZIP code found in the address");
+        return;
+      }
+      currentZip = extractedZip;
+    }
+
+    if (!validateZipCode(currentZip)) {
+      setError("Please enter a valid 5-digit ZIP code");
+      return;
+    }
+
+    const matched = allCities.filter((city) =>
+      city.zipCodes.includes(currentZip)
+    );
+
+    const seen = new Set<string>();
+    const uniqueResults: CityData[] = [];
+
+    for (let i = matched.length - 1; i >= 0; i--) {
+      const city = matched[i];
+      if (!seen.has(city.city)) {
+        seen.add(city.city);
+        uniqueResults.unshift(city);
+      }
+    }
+
+    if (uniqueResults.length > 0) {
+      setResults(uniqueResults);
+      setZipCode(currentZip);
+    } else {
+      setError("ZIP code not found in our California database");
+    }
+  };
+
+  const prepareToAdd = (cityData: CityData) => {
+    setCurrentCityToAdd(cityData);
+    if (searchMode === "address") {
+      const { name: suggestedName } = extractNameFromInput(fullAddress);
+      setTempName(suggestedName);
+    } else {
+      setTempName(name);
+      setTempCaseName(caseName);
+      setTempCaseNumber(caseNumber);
+    }
+    setShowNamePrompt(true);
+  };
+
+  const confirmAddToExcel = () => {
+    if (currentCityToAdd) {
+      const newRow: ExcelRow = {
+        "ZIP Code": zipCode,
+        Name: tempName,
+        "Case Name": searchMode === "zip" ? tempCaseName : "",
+        "Case #": tempCaseNumber, // Case number goes here only
+        City: currentCityToAdd.city,
+        County: currentCityToAdd.county,
+        Region: currentCityToAdd.region,
+        "Added On": new Date().toLocaleString(),
+      };
+
+      if (searchMode === "address") {
+        let cleanedAddress = fullAddress;
+        if (tempName) {
+          cleanedAddress = fullAddress.replace(
+            new RegExp(`^${tempName}\\s*,?\\s*`),
+            ""
+          );
+        }
+        // Don't add case number to address - keep it separate
+        newRow.Address = cleanedAddress;
+      }
+
+      setExcelData((prev) => [...prev, newRow]);
+    }
+    setShowNamePrompt(false);
+    setCurrentCityToAdd(null);
+  };
+
+  const addAllResults = () => {
+    if (searchMode === "address") {
+      const { name: suggestedName } = extractNameFromInput(fullAddress);
+      setTempName(suggestedName);
+    } else {
+      setTempName(name);
+      setTempCaseName(caseName);
+      setTempCaseNumber(caseNumber);
+    }
+    setShowNamePrompt(true);
+  };
+
+  const confirmAddAllToExcel = () => {
+    const newRows: ExcelRow[] = results.map((city) => {
+      const newRow: ExcelRow = {
+        "ZIP Code": zipCode,
+        Name: tempName,
+        "Case Name": searchMode === "zip" ? tempCaseName : "",
+        "Case #": tempCaseNumber, // Case number goes here only
+        City: city.city,
+        County: city.county,
+        Region: city.region,
+        "Added On": new Date().toLocaleString(),
+      };
+
+      if (searchMode === "address") {
+        let cleanedAddress = fullAddress;
+        if (tempName) {
+          cleanedAddress = fullAddress.replace(
+            new RegExp(`^${tempName}\\s*,?\\s*`),
+            ""
+          );
+        }
+        // Don't add case number to address - keep it separate
+        newRow.Address = cleanedAddress;
+      }
+
+      return newRow;
+    });
+
+    setExcelData((prev) => [...prev, ...newRows]);
+    setShowNamePrompt(false);
+  };
+
+  const toggleExcelPanel = () => {
+    setShowExcelPanel(!showExcelPanel);
+  };
+
+  const downloadExcel = () => {
+    if (excelData.length === 0) {
+      setError("No data to export");
+      return;
+    }
+
+    // Prepare data based on search mode
+    const dataToExport = excelData.map((row) => {
+      if (searchMode === "zip") {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { Address, ...rest } = row;
+        return rest;
+      }
+      return row;
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "ZipCodeData");
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+
+    const data = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    saveAs(data, fileName);
+  };
+
+  const clearExcelData = () => {
+    if (confirm("Are you sure you want to clear all Excel data?")) {
+      setExcelData([]);
+    }
+  };
+
+  const handleAddressInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target.value;
+    setFullAddress(input);
+    setResults([]);
+    setError(null);
+
+    const { name: extractedName, address: extractedAddress } =
+      extractNameFromInput(input);
+    setName(extractedName);
+    setAddress(extractedAddress);
+  };
+
+  const handleZipInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setZipCode(e.target.value);
+    setResults([]);
+    setError(null);
+    setName("");
+    setAddress("");
+    setFullAddress("");
+  };
+
+  const handleCaseNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCaseName(e.target.value);
+  };
+
+  const handleCaseNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCaseNumber(e.target.value);
+  };
+
+  const lastCity = results.length > 0 ? results[results.length - 1] : null;
+  const otherCities = results.slice(0, -1);
+
+  return (
+    <div className={styles.container}>
+      {/* Name Prompt Modal */}
+      {showNamePrompt && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal}>
+            <h3>Confirm Details for Entry</h3>
+            <div className={styles.inputGroup}>
+              <label className={styles.label}>Name:</label>
+              <input
+                type="text"
+                value={tempName}
+                onChange={(e) => setTempName(e.target.value)}
+                className={styles.input}
+              />
+            </div>
+            {searchMode === "zip" && (
+              <div className={styles.inputGroup}>
+                <label className={styles.label}>Case Name:</label>
+                <input
+                  type="text"
+                  value={tempCaseName}
+                  onChange={(e) => setTempCaseName(e.target.value)}
+                  className={styles.input}
+                />
+              </div>
+            )}
+            {/* Always show Case # field */}
+            <div className={styles.inputGroup}>
+              <label className={styles.label}>Case #:</label>
+              <input
+                type="text"
+                value={tempCaseNumber}
+                onChange={(e) => setTempCaseNumber(e.target.value)}
+                className={styles.input}
+              />
+            </div>
+            <div className={styles.modalButtons}>
+              <button
+                onClick={() => {
+                  if (currentCityToAdd) {
+                    confirmAddToExcel();
+                  } else {
+                    confirmAddAllToExcel();
+                  }
+                }}
+                className={styles.button}
+              >
+                Confirm
+              </button>
+              <button
+                onClick={() => setShowNamePrompt(false)}
+                className={styles.cancelButton}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main Content */}
+      <div className={styles.mainContent}>
+        <div className={styles.card}>
+          <h1 className={styles.title}>California ZIP Code Finder</h1>
+
+          {!searchMode ? (
+            <div className={styles.searchOptions}>
+              <h3 className={styles.subtitle}>How would you like to search?</h3>
+              <button
+                onClick={() => setSearchMode("zip")}
+                className={styles.searchOptionButton}
+              >
+                Search by ZIP Code Only
+              </button>
+              <button
+                onClick={() => setSearchMode("address")}
+                className={styles.searchOptionButton}
+              >
+                Search by Full Address
+              </button>
+            </div>
+          ) : (
+            <>
+              {searchMode === "zip" && (
+                <>
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>Enter ZIP Code:</label>
+                    <input
+                      type="text"
+                      value={zipCode}
+                      onChange={handleZipInputChange}
+                      placeholder="e.g., 90210"
+                      className={styles.input}
+                      maxLength={5}
+                    />
+                  </div>
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>Name:</label>
+                    <input
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Enter name"
+                      className={styles.input}
+                    />
+                  </div>
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>Case Name:</label>
+                    <input
+                      type="text"
+                      value={caseName}
+                      onChange={handleCaseNameChange}
+                      placeholder="Enter case name"
+                      className={styles.input}
+                    />
+                  </div>
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>Case #:</label>
+                    <input
+                      type="text"
+                      value={caseNumber}
+                      onChange={handleCaseNumberChange}
+                      placeholder="Enter case number"
+                      className={styles.input}
+                    />
+                  </div>
+                </>
+              )}
+
+              {searchMode === "address" && (
+                <div className={styles.inputGroup}>
+                  <label className={styles.label}>Enter full address:</label>
+                  <input
+                    type="text"
+                    value={fullAddress}
+                    onChange={handleAddressInputChange}
+                    placeholder="e.g., John Smith, 123 Main Street, Anytown, CA 91234"
+                    className={styles.input}
+                  />
+                  {name && (
+                    <div className={styles.namePreview}>
+                      <span className={styles.smallText}>Detected name: </span>
+                      <span className={styles.mediumText}>{name}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <button onClick={findCityByZip} className={styles.button}>
+                Find Location
+              </button>
+
+              <button
+                onClick={() => {
+                  setSearchMode(null);
+                  setZipCode("");
+                  setFullAddress("");
+                  setName("");
+                  setCaseName("");
+                  setCaseNumber("");
+                  setResults([]);
+                  setError(null);
+                }}
+                className={styles.secondaryButton}
+              >
+                Change Search Method
+              </button>
+            </>
+          )}
+
+          {error && <p className={styles.error}>{error}</p>}
+
+          {results.length > 0 && (
+            <div className={styles.resultsActions}>
+              <button onClick={addAllResults} className={styles.addButton}>
+                Add All to Excel
+              </button>
+            </div>
+          )}
+
+          {lastCity && (
+            <div className={styles.resultCard}>
+              <button
+                onClick={() => prepareToAdd(lastCity)}
+                className={styles.addIconButton}
+                title="Add to Excel"
+              >
+                Add
+              </button>
+
+              {name && (
+                <div className={styles.smallText}>
+                  <span>Input Info: </span>
+                  <span className={styles.mediumText}>{name}</span>
+                </div>
+              )}
+              {searchMode === "zip" && caseName && (
+                <div className={styles.smallText}>
+                  <span>Case Name: </span>
+                  <span className={styles.mediumText}>{caseName}</span>
+                </div>
+              )}
+              {searchMode === "zip" && caseNumber && (
+                <div className={styles.smallText}>
+                  <span>Case #: </span>
+                  <span className={styles.mediumText}>{caseNumber}</span>
+                </div>
+              )}
+              {searchMode === "address" && (
+                <div className={styles.smallText}>
+                  <span> </span>
+                  <span className={styles.mediumText}>{address}</span>
+                </div>
+              )}
+              <div>
+                <span className={styles.smallText}>Region: </span>
+                <span className={styles.boldText}>
+                  {lastCity.region} California
+                </span>
+              </div>
+              <div>
+                <span className={styles.smallText}>City: </span>
+                <span className={styles.mediumText}>{lastCity.city}</span>
+              </div>
+              <div>
+                <span className={styles.smallText}>County: </span>
+                <span className={styles.mediumText}>{lastCity.county}</span>
+              </div>
+              <div>
+                <span className={styles.smallText}>ZIP Code: </span>
+                <span className={styles.mediumText}>{zipCode}</span>
+              </div>
+            </div>
+          )}
+
+          {otherCities.length > 0 && (
+            <div>
+              <button
+                onClick={() => setShowOthers(!showOthers)}
+                className={styles.toggleButton}
+              >
+                {showOthers
+                  ? "Hide"
+                  : "Show Other Cities Associated with this Zip"}
+              </button>
+
+              {showOthers && (
+                <div>
+                  {otherCities.map((city, index) => (
+                    <div key={index} className={styles.otherResultCard}>
+                      <button
+                        onClick={() => prepareToAdd(city)}
+                        className={styles.addIconButton}
+                        title="Add to Excel"
+                      >
+                        Add
+                      </button>
+
+                      <div>
+                        <span className={styles.smallText}>City: </span>
+                        <span className={styles.mediumText}>{city.city}</span>
+                      </div>
+                      <div>
+                        <span className={styles.smallText}>County: </span>
+                        <span className={styles.mediumText}>{city.county}</span>
+                      </div>
+                      <div>
+                        <span className={styles.smallText}>Region:</span>
+                        <span className={styles.mediumText}>
+                          {city.region} California
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Floating toggle button for Excel panel */}
+      <button
+        onClick={toggleExcelPanel}
+        className={styles.toggleExcelButton}
+        title="Toggle Excel Panel"
+      >
+        📊
+        {excelData.length > 0 && (
+          <span className={styles.badge}>{excelData.length}</span>
+        )}
+      </button>
+
+      {/* Excel Panel */}
+      {showExcelPanel && (
+        <div className={styles.excelPanel}>
+          <div className={styles.panelHeader}>
+            <h2 className={styles.panelTitle}>Excel Data Collection</h2>
+            <button onClick={toggleExcelPanel} className={styles.closeButton}>
+              &times;
+            </button>
+          </div>
+
+          <div className={styles.inputGroup}>
+            <label className={styles.label}>Filename:</label>
+            <input
+              type="text"
+              value={fileName}
+              onChange={(e) => setFileName(e.target.value)}
+              className={styles.fileInput}
+            />
+          </div>
+
+          <div className={styles.actionButtons}>
+            <button
+              onClick={downloadExcel}
+              className={styles.downloadButton}
+              disabled={excelData.length === 0}
+            >
+              Download Excel
+            </button>
+            <button
+              onClick={clearExcelData}
+              className={styles.clearButton}
+              disabled={excelData.length === 0}
+            >
+              Clear Data
+            </button>
+          </div>
+
+          <div className={styles.dataSection}>
+            <div className={styles.dataHeader}>
+              <h3 className={styles.mediumText}>Collected Data</h3>
+              <span className={styles.dataCount}>
+                {excelData.length} entries
+              </span>
+            </div>
+
+            <div className={styles.dataList}>
+              {excelData.length === 0 ? (
+                <p className={styles.emptyData}>No data collected yet</p>
+              ) : (
+                excelData.map((row, i) => (
+                  <div key={i} className={styles.dataItem}>
+                    <div className={styles.dataItemHeader}>
+                      <span className={styles.mediumText}>
+                        {row.Name || "No name"}
+                      </span>
+                      {searchMode === "zip" && row["Case Name"] && (
+                        <span className={styles.mediumText}>
+                          {row["Case Name"]}
+                        </span>
+                      )}
+                      {searchMode === "zip" && row["Case #"] && (
+                        <span className={styles.mediumText}>
+                          {row["Case #"]}
+                        </span>
+                      )}
+                      <span className={styles.dataItemMeta}>
+                        {row["Added On"]}
+                      </span>
+                      <button
+                        onClick={() => {
+                          setExcelData((prev) =>
+                            prev.filter((_, index) => index !== i)
+                          );
+                        }}
+                        className={styles.deleteButton}
+                        title="Delete entry"
+                      >
+                        ×
+                      </button>
+                    </div>
+                    <div className={styles.mediumText}>{row.City}</div>
+                    <div className={styles.dataItemMeta}>
+                      {row["ZIP Code"]} • {row.County}
+                      {searchMode === "address" &&
+                        row.Address &&
+                        ` • ${row.Address}`}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+this code for it so i want if the zip from "True List" then show it first and after show other in hidden also dont repeate if its from los angeles city from  "Incorporated Cities": CityData[] this then show only True List's 

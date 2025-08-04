@@ -1,0 +1,480 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom: 2rem;
+  color: #2d3748;
+  text-align: center;
+}
+
+.form {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  background: #f8fafc;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #4a5568;
+  font-size: 0.9rem;
+}
+
+.input {
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #4299e1;
+  box-shadow: 0 0 0 1px #4299e1;
+}
+
+.textarea {
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  min-height: 120px;
+  resize: vertical;
+  font-size: 1rem;
+}
+
+.checkboxGroup {
+  display: flex;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+.checkboxGroup input {
+  margin-right: 0.5rem;
+}
+
+.checkboxLabel {
+  font-size: 0.9rem;
+  color: #4a5568;
+}
+
+.buttonGroup {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.button {
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  font-size: 1rem;
+}
+
+.buttonPrimary {
+  background-color: #4299e1;
+  color: white;
+}
+
+.buttonPrimary:hover {
+  background-color: #3182ce;
+}
+
+.buttonSuccess {
+  background-color: #48bb78;
+  color: white;
+}
+
+.buttonSuccess:hover {
+  background-color: #38a169;
+}
+
+.buttonExport {
+  background-color: #9f7aea;
+  color: white;
+}
+
+.buttonExport:hover {
+  background-color: #805ad5;
+}
+
+.tabs {
+  display: flex;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 1.5rem;
+}
+
+.tab {
+  padding: 0.75rem 1.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  color: #718096;
+  position: relative;
+}
+
+.tab:hover {
+  color: #4299e1;
+}
+
+.activeTab {
+  color: #4299e1;
+  border-bottom: 2px solid #4299e1;
+}
+
+.templatePreview {
+  background: #f8fafc;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.templateTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #2d3748;
+}
+
+.templateContent {
+  white-space: pre-line;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+  background: white;
+  padding: 1rem;
+  border-radius: 0.375rem;
+  border: 1px solid #e2e8f0;
+}
+
+.recordsSection {
+  margin-top: 3rem;
+}
+
+.recordsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.recordsTitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.recordsTableContainer {
+  overflow-x: auto;
+}
+
+.recordsTable {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.recordsTable th,
+.recordsTable td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.recordsTable th {
+  background: #f7fafc;
+  font-weight: 600;
+  color: #4a5568;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+}
+
+.recordsTable tr:hover {
+  background: #f8fafc;
+}
+
+@media (max-width: 768px) {
+  .form {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Add these to your existing CSS file */
+
+.buttonCancel {
+  background-color: #e53e3e;
+  color: white;
+}
+
+.buttonCancel:hover {
+  background-color: #c53030;
+}
+
+.buttonEdit {
+  background-color: #ed8936;
+  color: white;
+  padding: 0.5rem 1rem;
+  margin-right: 0.5rem;
+}
+
+.buttonEdit:hover {
+  background-color: #dd6b20;
+}
+
+.buttonDelete {
+  background-color: #e53e3e;
+  color: white;
+  padding: 0.5rem 1rem;
+}
+
+.buttonDelete:hover {
+  background-color: #c53030;
+}
+
+.buttonToggle {
+  background-color: #805ad5;
+  color: white;
+  margin: 1rem 0;
+}
+
+.buttonToggle:hover {
+  background-color: #6b46c1;
+}
+
+.recordsToggle {
+  display: flex;
+  justify-content: center;
+}
+
+.actionsCell {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.actionsCell button {
+  font-size: 0.8rem;
+}
+
+/* Make table cells more compact */
+.recordsTable td {
+  padding: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.recordsTable th {
+  padding: 0.75rem;
+}
+
+/* Add these styles to your existing CSS */
+/* Floating Button Styles */
+.floatingButtonContainer {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1001; /* Above the panel */
+}
+
+.toggleExcelButton {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.toggleExcelButton:hover {
+  background-color: #45a049;
+  transform: scale(1.1);
+}
+
+.toggleExcelButton.active {
+  background-color: #2e7d32;
+}
+
+.badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: #ff5722;
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+/* Records Panel Styles */
+.recordsPanel {
+  position: fixed;
+  top: 0;
+  right: -420px; /* Start off-screen */
+  width: 400px;
+  height: 100vh;
+  background-color: white;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+  transition: right 0.3s ease;
+  z-index: 1000;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.recordsPanel.show {
+  right: 0;
+}
+
+.panelHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+}
+
+.closeButton:hover {
+  color: #333;
+}
+
+.noRecords {
+  text-align: center;
+  color: #666;
+  margin-top: 20px;
+}
+
+/* Adjust the table for panel */
+.recordsPanel .recordsTable {
+  width: 100%;
+  font-size: 14px;
+}
+
+.recordsPanel .recordsTable th,
+.recordsPanel .recordsTable td {
+  padding: 8px;
+  text-align: left;
+}
+
+.recordsPanel .recordsTable th {
+  background-color: #f5f5f5;
+}
+
+.recordsPanel .buttonExport {
+  margin-bottom: 15px;
+  width: 100%;
+}
+
+/* Add to Qme.module.css */
+.viewDataModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.modalContent {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 1200px;
+  max-height: 80vh;
+  overflow: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.dataTableContainer {
+  overflow-x: auto;
+}
+
+.dataTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dataTable th,
+.dataTable td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.dataTable th {
+  background-color: #f5f5f5;
+  font-weight: 600;
+}
+
+.dataTable tr:hover {
+  background-color: #f9f9f9;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .modalContent {
+    width: 95%;
+    padding: 15px;
+  }
+
+  .dataTable th,
+  .dataTable td {
+    padding: 8px 10px;
+    font-size: 14px;
+  }
+}
