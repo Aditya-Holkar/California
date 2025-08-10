@@ -1,3 +1,4 @@
+"use client";
 import Link from "next/link";
 import styles from "../app/styles/Home.module.css";
 
