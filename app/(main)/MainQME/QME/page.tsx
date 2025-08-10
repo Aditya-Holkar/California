@@ -47,7 +47,7 @@ export default function EmailTemplate() {
   }, [setSavedRecords]);
 
   const generateCallText = () => {
-    return `Called Dr.'s office on PH: ${phoneNumber} and spoke with ${contactPerson}. Requested to schedule the QME appointment for our applicant ${applicantName} with Dr. ${doctorName} within 55-60 days from today's date. They provided ${contactEmail} as the email address to send the panel strike and demographic information. I will be sending the email shortly!`;
+    return `Called Dr.'s office on PH: ${phoneNumber} and spoke with ${contactPerson}. Requested to schedule the QME appointment for our applicant ${applicantName} with Dr. ${doctorName} within 65-70 days from today's date. They provided ${contactEmail} as the email address to send the panel strike and demographic information. I will be sending the email shortly!`;
   };
 
   const generateEmailText = () => {
