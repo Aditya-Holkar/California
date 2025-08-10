@@ -1,0 +1,147 @@
+/* Fancy Button with Transition */
+.sidebarButton {
+  position: fixed;
+  left: 50%;
+  bottom: 1.5rem;
+  transform: translateX(-50%);
+  z-index: 50000;
+  padding: 0.75rem 2rem;
+  border-radius: 3rem;
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.4);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  will-change: transform;
+}
+
+.sidebarButton:hover {
+  background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+  box-shadow: 0 15px 30px -5px rgba(37, 99, 235, 0.6);
+  transform: translateX(-50%) scale(1.1);
+}
+
+.sidebarButtonOpen {
+  transform: translateX(-50%) translateY(-10px) scale(0.95);
+  opacity: 1;
+}
+
+/* Panel - Now completely hidden when closed */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc(100vh - 100px);
+  background-color: white;
+  box-shadow: 0 -20px 50px -10px rgba(0, 0, 0, 0.15);
+  z-index: 4000;
+  transform: translateY(100%);
+  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+  will-change: transform;
+  border-top-left-radius: 1.5rem;
+  border-top-right-radius: 1.5rem;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sidebarOpen {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.sidebarContent {
+  padding: 1rem 1.5rem 6rem; /* Extra bottom padding */
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Overlay Transition */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background-color: black;
+  opacity: 0;
+  z-index: 3000;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+
+.overlayVisible {
+  opacity: 0.5;
+  pointer-events: auto;
+}
+
+/* Content Animations */
+.sidebarTitle {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  text-align: center;
+  color: #1e3a8a;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.4s ease 0.2s;
+}
+
+.sidebarOpen .sidebarTitle {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.sidebarList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sidebarLink {
+  display: block;
+  padding: 1.25rem;
+  border-radius: 1rem;
+  background-color: #f8fafc;
+  color: #1e40af;
+  font-weight: 500;
+  text-align: center;
+  transition: all 0.3s ease;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.sidebarOpen .sidebarLink {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.sidebarLink:hover {
+  background-color: #e0e7ff;
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 4px 12px -2px rgba(30, 64, 175, 0.2);
+}
+
+/* Staggered animations for links */
+.sidebarLink:nth-child(1) {
+  transition-delay: 0.25s;
+}
+.sidebarLink:nth-child(2) {
+  transition-delay: 0.3s;
+}
+.sidebarLink:nth-child(3) {
+  transition-delay: 0.35s;
+}
+.sidebarLink:nth-child(4) {
+  transition-delay: 0.4s;
+}
+.sidebarLink:nth-child(5) {
+  transition-delay: 0.45s;
+}
