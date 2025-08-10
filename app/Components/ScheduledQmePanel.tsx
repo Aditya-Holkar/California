@@ -258,16 +258,35 @@ export default function ViewQmeData({
   };
 
   // Delete record
+  // In ViewQmeData's handleDelete:
   const handleDelete = () => {
     if (!selectedRecord) return;
 
-    const updatedRecords = records.filter(
-      (record) => record.id !== selectedRecord.id
-    );
-    setRecords(updatedRecords);
-    setShowSidePanel(false);
-    setShowDeleteConfirm(false);
+    if (confirm("Are you sure you want to delete this record?")) {
+      const updatedRecords = records.filter(
+        (record) => record.id !== selectedRecord.id
+      );
+      setRecords(updatedRecords);
+      localStorage.setItem("qmeRecords", JSON.stringify(updatedRecords)); // Explicit save
+      setShowSidePanel(false);
+      setShowDeleteConfirm(false);
+
+      // Dispatch event to notify other components
+      window.dispatchEvent(new Event("storage"));
+    }
   };
+
+  // In EmailTemplate:
+  useEffect(() => {
+    const handleQmeUpdate = () => {
+      const records = JSON.parse(localStorage.getItem("qmeRecords") || "[]");
+      setRecords(records);
+    };
+
+    window.addEventListener("qmeRecordsUpdated", handleQmeUpdate);
+    return () =>
+      window.removeEventListener("qmeRecordsUpdated", handleQmeUpdate);
+  }, [setRecords]);
 
   // Generate email template
   const generateEmailTemplate = () => {
@@ -840,6 +859,7 @@ If you have any questions or need further adjustments, Please let me know.`;
               >
                 Cancel
               </button>
+              {/* In your delete confirmation modal */}
               <button
                 onClick={handleDelete}
                 className={styles.confirmDeleteButton}

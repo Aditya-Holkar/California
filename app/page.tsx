@@ -26,6 +26,9 @@ export default function Home() {
         <Link href="/Management" className={styles.link}>
           Management
         </Link>
+        <Link href="/Depo-bill" className={styles.link}>
+          Depo Bill
+        </Link>
       </div>
     </div>
   );

@@ -1,11 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocalStorage } from "../../../hooks/useLocalStorage";
 import styles from "../../../styles/Qme.module.css";
 import * as XLSX from "xlsx";
 // import ScheduledQmePanel from "../components/ScheduledQmePanel";
-import { QmeRecord } from "../../../Utils/qme";
+import {
+  ExtendedQmeRecord,
+  QmeRecord,
+  ScheduledStatus,
+} from "../../../Utils/qme";
 
 export default function EmailTemplate() {
   const [applicantName, setApplicantName] = useState("");
@@ -15,7 +19,7 @@ export default function EmailTemplate() {
   const [contactEmail, setContactEmail] = useState("");
   const [caseNumber, setCaseNumber] = useState("");
   const [interpreterRequired, setInterpreterRequired] = useState(true);
-  const [savedRecords, setSavedRecords] = useLocalStorage<QmeRecord[]>(
+  const [savedRecords, setSavedRecords] = useLocalStorage<ExtendedQmeRecord[]>(
     "qmeRecords",
     []
   );
@@ -25,6 +29,22 @@ export default function EmailTemplate() {
   const [showRecordsPanel, setShowRecordsPanel] = useState(false);
 
   const generateId = () => Math.random().toString(36).substring(2, 9);
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const records = JSON.parse(localStorage.getItem("qmeRecords") || "[]");
+      setSavedRecords(records);
+    };
+
+    // Listen for both storage and custom events
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("qmeRecordsUpdated", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("qmeRecordsUpdated", handleStorageChange);
+    };
+  }, [setSavedRecords]);
 
   const generateCallText = () => {
     return `Called Dr.'s office on PH: ${phoneNumber} and spoke with ${contactPerson}. Requested to schedule the QME appointment for our applicant ${applicantName} with Dr. ${doctorName} within 55-60 days from today's date. They provided ${contactEmail} as the email address to send the panel strike and demographic information. I will be sending the email shortly!`;
@@ -65,8 +85,8 @@ Please let me know if you require anything further from my end.
       return;
     }
 
-    const newRecord: QmeRecord = {
-      id: generateId(), // Always generate new ID
+    const newRecord: ExtendedQmeRecord = {
+      id: generateId(),
       date: new Date().toISOString().split("T")[0],
       caseNumber,
       applicantName,
@@ -75,12 +95,15 @@ Please let me know if you require anything further from my end.
       interpreterRequired,
       contactPerson,
       contactEmail,
+      scheduled: "No" as ScheduledStatus,
+      address: "",
+      appointmentDate: "",
+      appointmentTime: "",
+      hoursBeforeArrival: "1",
     };
 
-    // Always add as new record
     setSavedRecords([...savedRecords, newRecord]);
     resetForm();
-    // setViewingRecords(true);
   };
 
   const resetForm = () => {

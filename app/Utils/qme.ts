@@ -1,16 +1,3 @@
-export interface ScheduledQmeRecord {
-  id: string;
-  date: string;
-  caseNumber: string;
-  applicantName: string;
-  doctorName: string;
-  appointmentDate: string;
-  appointmentTime: string;
-  earlyArrivalTime: string;
-  address: string;
-  scheduled: boolean;
-}
-
 export interface QmeRecord {
   id: string;
   date: string;
@@ -18,7 +5,17 @@ export interface QmeRecord {
   applicantName: string;
   doctorName: string;
   phoneNumber: string;
-  interpreterRequired: boolean;
   contactPerson: string;
   contactEmail: string;
+  interpreterRequired: boolean;
+}
+
+export type ScheduledStatus = "Yes" | "No" | "Cancelled";
+
+export interface ExtendedQmeRecord extends QmeRecord {
+  scheduled: ScheduledStatus;
+  address: string;
+  appointmentDate: string;
+  appointmentTime: string;
+  hoursBeforeArrival: string;
 }
