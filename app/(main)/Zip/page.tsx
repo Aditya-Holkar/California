@@ -7,10 +7,12 @@ import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import styles from "../../styles/Zip.module.css";
 import PhoneInput from "react-phone-number-input";
+import ZipDashboard from "@/app/Components/ZipDashboard";
 
 type ExcelRow = {
   "ZIP Code": string;
-  Name: string;
+  // Name: string;
+  Office: string;
   "Case Name": string;
   "Case #": string;
   "Case Status": string;
@@ -45,6 +47,8 @@ export default function Zip() {
   const [showExcelPanel, setShowExcelPanel] = useState<boolean>(false);
   const [fileName, setFileName] = useState<string>("California_Zip_Data.xlsx");
 
+  const [office, setOffice] = useState<string>("");
+
   useEffect(() => {
     const savedData = localStorage.getItem("californiaZipData");
     if (savedData) {
@@ -55,6 +59,19 @@ export default function Zip() {
   useEffect(() => {
     localStorage.setItem("californiaZipData", JSON.stringify(excelData));
   }, [excelData]);
+
+  const handleUploadedData = (newData: ExcelRow[]) => {
+    // Filter out any duplicates based on ZIP Code, Name, and Case #
+    const existingDataMap = new Map(
+      excelData.map((item) => [`${item["ZIP Code"]}-${item["Case #"]}`, item])
+    );
+
+    const filteredNewData = newData.filter(
+      (item) => !existingDataMap.has(`${item["ZIP Code"]}-${item["Case #"]}`)
+    );
+
+    setExcelData((prev) => [...prev, ...filteredNewData]);
+  };
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const allCities: CityData[] = [
@@ -201,7 +218,8 @@ export default function Zip() {
     if (currentCityToAdd) {
       const newRow: ExcelRow = {
         "ZIP Code": zipCode,
-        Name: tempName,
+        // Name: tempName,
+        Office: office,
         "Case Name": searchMode === "zip" ? tempCaseName : "",
         "Case #": tempCaseNumber,
         // "Case Status": searchMode === "zip" ? tempCaseStatus : "", // Added Case Status
@@ -245,7 +263,8 @@ export default function Zip() {
     const newRows: ExcelRow[] = results.map((city) => {
       const newRow: ExcelRow = {
         "ZIP Code": zipCode,
-        Name: tempName,
+        // Name: tempName,
+        Office: office,
         "Case Name": searchMode === "zip" ? tempCaseName : "",
         "Case #": tempCaseNumber,
         // "Case Status": searchMode === "zip" ? tempCaseStatus : "", // Added Case Status
@@ -287,7 +306,7 @@ export default function Zip() {
     // Prepare data with all required fields
     const dataToExport = excelData.map((row) => ({
       "ZIP Code": row["ZIP Code"],
-      Name: row["Name"],
+      Office: row["Office"],
       "Case Name": row["Case Name"],
       "Case #": row["Case #"],
       "Case Status": row["Case Status"], // Ensure Case Status is included
@@ -368,13 +387,21 @@ export default function Zip() {
             <h3>Confirm Details for Entry</h3>
 
             <div className={styles.inputGroup}>
-              <label className={styles.label}>Name:</label>
-              <input
-                type="text"
-                value={tempName}
-                onChange={(e) => setTempName(e.target.value)}
-                className={styles.input}
-              />
+              <label className={styles.label}>Office:</label>
+              <select
+                value={office}
+                onChange={(e) => setOffice(e.target.value)}
+                className={styles.selectInput}
+                required
+              >
+                <option value="">Select an office</option>
+                <option value="Law office of Robin Jacobs">
+                  Law office of Robin Jacobs
+                </option>
+                <option value="Law office of Sam Schmuel">
+                  Law office of Sam Schmuel
+                </option>
+              </select>
             </div>
             {searchMode === "zip" && (
               <div className={styles.inputGroup}>
@@ -407,7 +434,7 @@ export default function Zip() {
               />
             </div>
 
-            {searchMode === "zip" && (
+            {/* {searchMode === "zip" && (
               <div className={styles.inputGroup}>
                 <label className={styles.label}>Case Status:</label>
                 <input
@@ -417,7 +444,7 @@ export default function Zip() {
                   className={styles.input}
                 />
               </div>
-            )}
+            )} */}
             <div className={styles.modalButtons}>
               <button
                 onClick={() => {
@@ -443,84 +470,133 @@ export default function Zip() {
       )}
 
       <div className={styles.mainContent}>
-        <div className={styles.card}>
-          <h1 className={styles.title}>California Information by Zip</h1>
+        {/* Left side - Form */}
+        <div className={styles.formSection}>
+          <div className={styles.card}>
+            <h1 className={styles.title}>California Information by Zip</h1>
 
-          {!searchMode ? (
-            <div className={styles.searchOptions}>
-              <h3 className={styles.subtitle}>How would you like to search?</h3>
-              <button
-                onClick={() => setSearchMode("zip")}
-                className={styles.searchOptionButton}
-              >
-                Search by ZIP Code Only
-              </button>
-              {/* <button
+            {!searchMode ? (
+              <div className={styles.searchOptions}>
+                <h3 className={styles.subtitle}>
+                  How would you like to search?
+                </h3>
+                <button
+                  onClick={() => setSearchMode("zip")}
+                  className={styles.searchOptionButton}
+                >
+                  Search by ZIP Code Only
+                </button>
+                {/* <button
                 onClick={() => setSearchMode("address")}
                 className={styles.searchOptionButton}
               >
                 Search by Full Address
               </button> */}
-            </div>
-          ) : (
-            <>
-              {searchMode === "zip" && (
-                <>
-                  <div className={styles.inputGroup}>
-                    <label className={styles.label}>Enter ZIP Code:</label>
-                    <input
-                      type="text"
-                      value={zipCode}
-                      onChange={handleZipInputChange}
-                      placeholder="e.g., 90210 or 90210-1234"
-                      className={styles.input}
-                      maxLength={10}
-                    />
-                  </div>
-                  <div className={styles.inputGroup}>
-                    <label className={styles.label}>Name:</label>
-                    <input
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="Enter name"
-                      className={styles.input}
-                    />
-                  </div>
-                  <div className={styles.inputGroup}>
-                    <label className={styles.label}>Case Name:</label>
-                    <input
-                      type="text"
-                      value={caseName}
-                      onChange={handleCaseNameChange}
-                      placeholder="Enter case name"
-                      className={styles.input}
-                    />
-                  </div>
-                  <div className={styles.inputGroup}>
-                    <label className={styles.label}>Case #:</label>
-                    <input
-                      type="text"
-                      value={caseNumber}
-                      onChange={handleCaseNumberChange}
-                      placeholder="Enter case number"
-                      className={styles.input}
-                    />
-                  </div>
-                  <div className={styles.inputGroup}>
-                    <label className={styles.label}>Case Status:</label>
-                    <input
-                      type="text"
-                      value={caseStatus}
-                      onChange={(e) => setCaseStatus(e.target.value)}
-                      placeholder="Enter case status"
-                      className={styles.input}
-                    />
-                  </div>
-                </>
-              )}
+              </div>
+            ) : (
+              <>
+                {searchMode === "zip" && (
+                  <>
+                    <div className={styles.twoColumnForm}>
+                      {/* Left Column */}
+                      <div className={styles.formColumn}>
+                        <div className={styles.inputGroup}>
+                          <label className={styles.label}>
+                            Enter ZIP Code:
+                          </label>
+                          <input
+                            type="text"
+                            value={zipCode}
+                            onChange={handleZipInputChange}
+                            placeholder="e.g., 90210 or 90210-1234"
+                            className={styles.input}
+                            maxLength={10}
+                          />
+                        </div>
 
-              {/* {searchMode === "address" && (
+                        <div className={styles.inputGroup}>
+                          <label className={styles.label}>Case Name:</label>
+                          <input
+                            type="text"
+                            value={caseName}
+                            onChange={handleCaseNameChange}
+                            placeholder="Enter case name"
+                            className={styles.input}
+                          />
+                        </div>
+
+                        <div className={styles.inputGroup}>
+                          <label className={styles.label}>Case Status:</label>
+                          <input
+                            type="text"
+                            value={caseStatus}
+                            onChange={(e) => setCaseStatus(e.target.value)}
+                            placeholder="Enter case status"
+                            className={styles.input}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Right Column */}
+                      <div className={styles.formColumn}>
+                        <div className={styles.inputGroup}>
+                          <label className={styles.label}>Office:</label>
+                          <select
+                            value={office}
+                            onChange={(e) => setOffice(e.target.value)}
+                            className={styles.selectInput}
+                            required
+                          >
+                            <option value="">Select an office</option>
+                            <option value="Law office of Robin Jacobs">
+                              Law office of Robin Jacobs
+                            </option>
+                            <option value="Law office of Sam Schmuel">
+                              Law office of Sam Schmuel
+                            </option>
+                          </select>
+                        </div>
+
+                        <div className={styles.inputGroup}>
+                          <label className={styles.label}>Case #:</label>
+                          <input
+                            type="text"
+                            value={caseNumber}
+                            onChange={handleCaseNumberChange}
+                            placeholder="Enter case number"
+                            className={styles.input}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Full width buttons below the columns */}
+                    <div className={styles.formActions}>
+                      <button onClick={findCityByZip} className={styles.button}>
+                        Find Location
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setSearchMode(null);
+                          setZipCode("");
+                          setFullAddress("");
+                          setName("");
+                          setCaseName("");
+                          setCaseNumber("");
+                          setCaseStatus("");
+                          setResults([]);
+                          setError(null);
+                        }}
+                        className={styles.secondaryButton}
+                      >
+                        Change Search Method
+                      </button>
+                    </div>
+                  </>
+                )}
+
+                {/* {searchMode === "address" && (
                 <div className={styles.inputGroup}>
                   <label className={styles.label}>Enter full address:</label>
                   <input
@@ -539,149 +615,156 @@ export default function Zip() {
                 </div>
               )} */}
 
-              <button onClick={findCityByZip} className={styles.button}>
-                Find Location
-              </button>
+                {/* <button onClick={findCityByZip} className={styles.button}>
+                  Find Location
+                </button>
 
-              <button
-                onClick={() => {
-                  setSearchMode(null);
-                  setZipCode("");
-                  setFullAddress("");
-                  setName("");
-                  setCaseName("");
-                  setCaseNumber("");
-                  setCaseStatus("");
-                  setResults([]);
-                  setError(null);
-                }}
-                className={styles.secondaryButton}
-              >
-                Change Search Method
-              </button>
-            </>
-          )}
+                <button
+                  onClick={() => {
+                    setSearchMode(null);
+                    setZipCode("");
+                    setFullAddress("");
+                    setName("");
+                    setCaseName("");
+                    setCaseNumber("");
+                    setCaseStatus("");
+                    setResults([]);
+                    setError(null);
+                  }}
+                  className={styles.secondaryButton}
+                >
+                  Change Search Method
+                </button> */}
+              </>
+            )}
 
-          {error && <p className={styles.error}>{error}</p>}
+            {error && <p className={styles.error}>{error}</p>}
 
-          {results.length > 0 && (
-            <div className={styles.resultsActions}>
-              <button onClick={addAllResults} className={styles.addButton}>
-                Add All to Excel
-              </button>
-            </div>
-          )}
+            {results.length > 0 && (
+              <div className={styles.resultsActions}>
+                <button onClick={addAllResults} className={styles.addButton}>
+                  Add All to Excel
+                </button>
+              </div>
+            )}
 
-          {trueListResults.length > 0 && (
-            <div className={styles.resultsContainer}>
-              {trueListResults.map((city, index) => (
-                <div key={`true-${index}`} className={styles.resultCard}>
-                  <button
-                    onClick={() => prepareToAdd(city)}
-                    className={styles.addIconButton}
-                    title="Add to Excel"
-                  >
-                    Add
-                  </button>
-                  <div className={styles.trueListBadge}>Preferred Choice</div>
-
-                  {name && (
-                    <div className={styles.smallText}>
-                      <span>Input Info: </span>
-                      <span className={styles.mediumText}>{name}</span>
-                    </div>
-                  )}
-                  {searchMode === "zip" && caseName && (
-                    <div className={styles.smallText}>
-                      <span>Case Name: </span>
-                      <span className={styles.mediumText}>{caseName}</span>
-                    </div>
-                  )}
-                  {searchMode === "zip" && caseNumber && (
-                    <div className={styles.smallText}>
-                      <span>Case #: </span>
-                      <span className={styles.mediumText}>{caseNumber}</span>
-                    </div>
-                  )}
-                  {searchMode === "address" && (
-                    <div className={styles.smallText}>
-                      <span> </span>
-                      <span className={styles.mediumText}>{address}</span>
-                    </div>
-                  )}
-                  <div>
-                    <span className={styles.smallText}>Region: </span>
-                    <span className={styles.boldText}>
-                      {city.region} California
-                    </span>
-                  </div>
-                  <div>
-                    <span className={styles.smallText}>City: </span>
-                    <span className={styles.mediumText}>{city.city}</span>
-                  </div>
-                  <div>
-                    <span className={styles.smallText}>County: </span>
-                    <span className={styles.mediumText}>{city.county}</span>
-                  </div>
-                  <div>
-                    <span className={styles.smallText}>ZIP Code: </span>
-                    <span className={styles.mediumText}>{zipCode}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {otherResults.length > 0 && (
-            <div>
-              <button
-                onClick={() => setShowOthers(!showOthers)}
-                className={styles.toggleButton}
-              >
-                {showOthers
-                  ? "Hide Result"
-                  : `Show Other Result for this city (${otherResults.length})`}
-              </button>
-
-              {showOthers && (
-                <div className={styles.otherResultsContainer}>
-                  {otherResults.map((city, index) => (
-                    <div
-                      key={`other-${index}`}
-                      className={styles.otherResultCard}
+            {trueListResults.length > 0 && (
+              <div className={styles.resultsContainer}>
+                {trueListResults.map((city, index) => (
+                  <div key={`true-${index}`} className={styles.resultCard}>
+                    <button
+                      onClick={() => prepareToAdd(city)}
+                      className={styles.addIconButton}
+                      title="Add to Excel"
                     >
-                      <button
-                        onClick={() => prepareToAdd(city)}
-                        className={styles.addIconButton}
-                        title="Add to Excel"
-                      >
-                        Add
-                      </button>
+                      Add
+                    </button>
+                    <div className={styles.trueListBadge}>Preferred Choice</div>
 
-                      <div>
-                        <span className={styles.smallText}>City: </span>
-                        <span className={styles.mediumText}>{city.city}</span>
+                    {name && (
+                      <div className={styles.smallText}>
+                        <span>Input Info: </span>
+                        <span className={styles.mediumText}>{name}</span>
                       </div>
-                      <div>
-                        <span className={styles.smallText}>County: </span>
-                        <span className={styles.mediumText}>{city.county}</span>
+                    )}
+                    {searchMode === "zip" && caseName && (
+                      <div className={styles.smallText}>
+                        <span>Case Name: </span>
+                        <span className={styles.mediumText}>{caseName}</span>
                       </div>
-                      <div>
-                        <span className={styles.smallText}>Region:</span>
-                        <span className={styles.mediumText}>
-                          {city.region} California
-                        </span>
+                    )}
+                    {searchMode === "zip" && caseNumber && (
+                      <div className={styles.smallText}>
+                        <span>Case #: </span>
+                        <span className={styles.mediumText}>{caseNumber}</span>
                       </div>
-                      <div>
-                        <span className={styles.smallText}>ZIP Code: </span>
-                        <span className={styles.mediumText}>{zipCode}</span>
+                    )}
+                    {searchMode === "address" && (
+                      <div className={styles.smallText}>
+                        <span> </span>
+                        <span className={styles.mediumText}>{address}</span>
                       </div>
+                    )}
+                    <div>
+                      <span className={styles.smallText}>Region: </span>
+                      <span className={styles.boldText}>
+                        {city.region} California
+                      </span>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+                    <div>
+                      <span className={styles.smallText}>City: </span>
+                      <span className={styles.mediumText}>{city.city}</span>
+                    </div>
+                    <div>
+                      <span className={styles.smallText}>County: </span>
+                      <span className={styles.mediumText}>{city.county}</span>
+                    </div>
+                    <div>
+                      <span className={styles.smallText}>ZIP Code: </span>
+                      <span className={styles.mediumText}>{zipCode}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {otherResults.length > 0 && (
+              <div>
+                <button
+                  onClick={() => setShowOthers(!showOthers)}
+                  className={styles.toggleButton}
+                >
+                  {showOthers
+                    ? "Hide Result"
+                    : `Show Other Result for this city (${otherResults.length})`}
+                </button>
+
+                {showOthers && (
+                  <div className={styles.otherResultsContainer}>
+                    {otherResults.map((city, index) => (
+                      <div
+                        key={`other-${index}`}
+                        className={styles.otherResultCard}
+                      >
+                        <button
+                          onClick={() => prepareToAdd(city)}
+                          className={styles.addIconButton}
+                          title="Add to Excel"
+                        >
+                          Add
+                        </button>
+
+                        <div>
+                          <span className={styles.smallText}>City: </span>
+                          <span className={styles.mediumText}>{city.city}</span>
+                        </div>
+                        <div>
+                          <span className={styles.smallText}>County: </span>
+                          <span className={styles.mediumText}>
+                            {city.county}
+                          </span>
+                        </div>
+                        <div>
+                          <span className={styles.smallText}>Region:</span>
+                          <span className={styles.mediumText}>
+                            {city.region} California
+                          </span>
+                        </div>
+                        <div>
+                          <span className={styles.smallText}>ZIP Code: </span>
+                          <span className={styles.mediumText}>{zipCode}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+        {/* Right side - Dashboard */}
+        <div className={styles.dashboardSection}>
+          <ZipDashboard onUpload={handleUploadedData} excelData={excelData} />
         </div>
       </div>
 

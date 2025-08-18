@@ -57,7 +57,7 @@ Hello,
 
 I hope you are doing well.
 Please find attached the Panel Strike and demographic for ${applicantName}.
-I would like to schedule the QME appointment for this applicant with Dr. ${doctorName} within 55-60 days from today's date.
+I would like to schedule the QME appointment for this applicant with Dr. ${doctorName} within 65-70 days from today's date.
 ${
   interpreterRequired
     ? "We will also require a Spanish interpreter for this QME."
@@ -74,7 +74,7 @@ Please let me know if you require anything further from my end.
   // Remove any edit-related states like editingId
 
   const generateNoteText = () => {
-    return `QME request sent to Dr.'s office for ${applicantName} with Dr. ${doctorName} within 55-60 days, along with panel strike and demographic information via email. Awaiting their response.`;
+    return `QME request sent to Dr.'s office for ${applicantName} with Dr. ${doctorName} within 65-70 days, along with panel strike and demographic information via email. Awaiting their response.`;
   };
 
   const handleSubmit = (e: React.FormEvent) => {

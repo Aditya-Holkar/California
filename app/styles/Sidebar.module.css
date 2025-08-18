@@ -145,3 +145,55 @@
 .sidebarLink:nth-child(5) {
   transition-delay: 0.45s;
 }
+
+/* Add these to your existing Sidebar.module.css */
+.sidebarAuthButton {
+  background: none;
+  border: none;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  padding: 12px 20px;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 4px;
+}
+
+.sidebarAuthButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.sidebarPasswordForm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 20px;
+}
+
+.sidebarPasswordInput {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: inherit;
+  width: 100%;
+}
+
+.sidebarPasswordButton {
+  padding: 8px 12px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  width: 100%;
+}
+
+.sidebarPasswordButton:hover {
+  background-color: #45a049;
+}

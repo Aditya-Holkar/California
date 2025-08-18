@@ -9,6 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@types/cheerio": "^0.22.35",
+    "cheerio": "^1.1.0",
     "docx": "^9.5.1",
     "file-saver": "^2.0.5",
     "jspdf": "^2.5.2",
@@ -20,6 +22,8 @@
     "react-dom": "^19.0.0",
     "react-dropzone": "^14.3.8",
     "react-phone-number-input": "^3.4.12",
+    "react-responsive": "^10.0.1",
+    "recharts": "^3.1.2",
     "tailwind": "^4.0.0",
     "xlsx": "^0.18.5"
   },

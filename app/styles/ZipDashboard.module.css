@@ -1,0 +1,116 @@
+/* Previous styles remain the same, add these new styles: */
+
+.uploadContainer {
+  text-align: center;
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: #f0f8ff;
+  border-radius: 8px;
+  border: 1px dashed #007bff;
+}
+
+.uploadButton {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  margin-bottom: 10px;
+}
+
+.uploadButton:hover {
+  background-color: #0056b3;
+}
+
+.fileInput {
+  display: none;
+}
+
+.fileRequirements {
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 5px;
+}
+
+.errorMessage {
+  color: #dc3545;
+  margin: 10px 0;
+  font-size: 0.9rem;
+}
+
+.uploadPrompt {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+}
+
+.sampleData {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.sampleData table {
+  margin: 10px auto;
+  border-collapse: collapse;
+  width: 100%;
+  max-width: 600px;
+}
+
+.sampleData th,
+.sampleData td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+.sampleData th {
+  background-color: #f2f2f2;
+}
+
+.dataPreview {
+  margin-top: 30px;
+}
+
+.previewTableContainer {
+  overflow-x: auto;
+  margin-top: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.previewTableContainer table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.previewTableContainer th {
+  position: sticky;
+  top: 0;
+  background-color: #f8f9fa;
+  z-index: 10;
+}
+
+.previewTableContainer th,
+.previewTableContainer td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.previewTableContainer tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
+
+@media (max-width: 600px) {
+  .previewTableContainer {
+    font-size: 0.8rem;
+  }
+
+  .previewTableContainer th,
+  .previewTableContainer td {
+    padding: 4px 6px;
+  }
+}
