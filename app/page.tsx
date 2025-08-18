@@ -49,6 +49,31 @@ export default function Home() {
     }
   };
 
+  // Safe heading processing function
+  const processHeadings = () => {
+    if (typeof window !== "undefined") {
+      document.querySelectorAll("h1, h2, h3, h4, h5, h6").forEach((element) => {
+        const node = element as HTMLElement;
+        const tagName = node.tagName?.toLowerCase();
+
+        if (!tagName || !/^h[1-6]$/.test(tagName)) return;
+
+        const level = parseInt(tagName.substring(1), 10);
+        if (isNaN(level)) return;
+
+        const text = node.textContent?.trim();
+        if (!text) return;
+
+        // Your existing heading processing logic here
+        // ...
+      });
+    }
+  };
+
+  useEffect(() => {
+    processHeadings();
+  }, []);
+
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>
