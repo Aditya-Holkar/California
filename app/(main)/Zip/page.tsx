@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
@@ -60,13 +61,17 @@ export default function Zip() {
     localStorage.setItem("californiaZipData", JSON.stringify(excelData));
   }, [excelData]);
 
-  const handleUploadedData = (newData: ExcelRow[]) => {
-    // Filter out any duplicates based on ZIP Code, Name, and Case #
+  const handleUploadedData = (newData: any[]) => {
+    const transformedData = newData.map((item) => ({
+      ...item,
+      "Added On": item["Added On"] || new Date().toISOString(), // Ensure required field
+    }));
+
     const existingDataMap = new Map(
       excelData.map((item) => [`${item["ZIP Code"]}-${item["Case #"]}`, item])
     );
 
-    const filteredNewData = newData.filter(
+    const filteredNewData = transformedData.filter(
       (item) => !existingDataMap.has(`${item["ZIP Code"]}-${item["Case #"]}`)
     );
 
