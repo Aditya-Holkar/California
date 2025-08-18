@@ -9,6 +9,7 @@ vendor/
 .env.local
 .env*.local
 
+/app/(main)/Data/
 # Build/output directories
 dist/
 build/

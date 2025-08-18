@@ -5,9 +5,25 @@ import styles from "../styles/Sidebar.module.css";
 
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [authenticated, setAuthenticated] = useState(false);
+  const [password, setPassword] = useState("");
+  const [showPasswordInput, setShowPasswordInput] = useState(false);
+  const correctPassword = "Aditya@2001"; // Use your password
 
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
+    setShowPasswordInput(false); // Reset password input when closing
+  };
+
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password === correctPassword) {
+      setAuthenticated(true);
+      setShowPasswordInput(false);
+    } else {
+      alert("Incorrect password!");
+      setPassword("");
+    }
   };
 
   return (
@@ -54,24 +70,6 @@ export default function Sidebar() {
             </li>
             <li>
               <Link
-                href="/MainQME"
-                className={styles.sidebarLink}
-                onClick={() => setIsOpen(false)}
-              >
-                🩺 QME
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/Management"
-                className={styles.sidebarLink}
-                onClick={() => setIsOpen(false)}
-              >
-                💼 Management
-              </Link>
-            </li>
-            <li>
-              <Link
                 href="/Depo-bill"
                 className={styles.sidebarLink}
                 onClick={() => setIsOpen(false)}
@@ -79,6 +77,61 @@ export default function Sidebar() {
                 💵 Depo Bill
               </Link>
             </li>
+
+            {/* Protected Links */}
+            {authenticated ? (
+              <>
+                <li>
+                  <Link
+                    href="/MainQME"
+                    className={styles.sidebarLink}
+                    onClick={() => setIsOpen(false)}
+                  >
+                    🩺 QME
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/Management"
+                    className={styles.sidebarLink}
+                    onClick={() => setIsOpen(false)}
+                  >
+                    💼 Management
+                  </Link>
+                </li>
+              </>
+            ) : (
+              <li>
+                {showPasswordInput ? (
+                  <form
+                    onSubmit={handlePasswordSubmit}
+                    className={styles.sidebarPasswordForm}
+                  >
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Enter password"
+                      className={styles.sidebarPasswordInput}
+                      autoFocus
+                    />
+                    <button
+                      type="submit"
+                      className={styles.sidebarPasswordButton}
+                    >
+                      Unlock
+                    </button>
+                  </form>
+                ) : (
+                  <button
+                    onClick={() => setShowPasswordInput(true)}
+                    className={styles.sidebarAuthButton}
+                  >
+                    🔒 Unlock Features
+                  </button>
+                )}
+              </li>
+            )}
           </ul>
         </div>
       </div>
