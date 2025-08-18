@@ -5,15 +5,15 @@ import { useState, useEffect } from "react";
 import styles from "../app/styles/Home.module.css";
 
 export default function Home() {
-  const [password, setPassword] = useState("");
-  const [authenticated, setAuthenticated] = useState(false);
-  const [showPasswordInput, setShowPasswordInput] = useState(false);
+  const [password, setPassword] = useState<string>("");
+  const [authenticated, setAuthenticated] = useState<boolean>(false);
+  const [showPasswordInput, setShowPasswordInput] = useState<boolean>(false);
   const [keySequence, setKeySequence] = useState<string[]>([]);
-  const [tapCount, setTapCount] = useState(0);
+  const [tapCount, setTapCount] = useState<number>(0);
   const correctPassword = "Aditya@2001";
 
   // Konami code (simplified to ↑↑ for desktop)
-  const konamiCode = ["ArrowUp", "ArrowUp"];
+  const konamiCode: string[] = ["ArrowUp", "ArrowUp"];
 
   // Track both keyboard and touch inputs
   useEffect(() => {
@@ -39,7 +39,7 @@ export default function Home() {
     }
   }, [tapCount]);
 
-  const handlePasswordSubmit = (e: React.FormEvent) => {
+  const handlePasswordSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (password === correctPassword) {
       setAuthenticated(true);
@@ -58,7 +58,7 @@ export default function Home() {
         But, <span className={styles.highlight}>CAN YOU COOK</span>{" "}
         {!authenticated && !showPasswordInput && (
           <span
-            onClick={() => setTapCount((prev) => prev + 1)}
+            onClick={() => setTapCount((prev: number) => prev + 1)}
             style={{ cursor: "pointer" }}
             className={styles.pillEmoji}
           >
@@ -98,7 +98,9 @@ export default function Home() {
                 <input
                   type="password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setPassword(e.target.value)
+                  }
                   placeholder="Enter secret password"
                   className={styles.passwordInput}
                   autoFocus
@@ -111,15 +113,6 @@ export default function Home() {
           )
         )}
       </div>
-
-      {/* Context-sensitive hints */}
-      {/* {!authenticated && !showPasswordInput && (
-        <div className={styles.hint}>
-          {window.matchMedia("(pointer: coarse)").matches 
-            ? "Hint: Triple-tap the pill..."
-            : "Hint: Press ↑↑ on your keyboard"}
-        </div>
-      )} */}
     </div>
   );
 }
