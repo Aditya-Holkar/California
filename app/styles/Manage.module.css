@@ -261,7 +261,7 @@
 .transactionsTable {
   width: 100%;
   border-collapse: collapse;
-  min-width: 800px;
+  min-width: 50px;
 }
 
 .transactionsTable th {
@@ -423,7 +423,7 @@
 .categoriesTable {
   width: 100%;
   border-collapse: collapse;
-  min-width: 600px;
+  min-width: 50px;
 }
 
 .categoriesTable th {
@@ -477,7 +477,13 @@
   }
 
   .categoriesTable {
-    min-width: 500px;
+    min-width: 50px;
+    width: 100%;
+  }
+  .transactionsTable {
+  width: 100%;
+  //border-collapse: collapse;
+  min-width: 50px;
   }
 }
 
