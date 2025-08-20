@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
@@ -35,6 +36,8 @@ type ZipDashboardProps = {
   excelData: ExcelRow[];
 };
 
+type PieChartType = "office" | "county" | "region";
+
 const COLORS = [
   "#0088FE",
   "#00C49F",
@@ -55,10 +58,13 @@ export default function ZipDashboard({
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [filters, setFilters] = useState<Partial<ExcelRow>>({});
+  const [activePieFilter, setActivePieFilter] = useState<{
+    type: PieChartType;
+    value: string;
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Prepare data for pie charts
-
   const officeData = useMemo(() => {
     const officeCounts = excelData.reduce((acc, row) => {
       acc[row.Office] = (acc[row.Office] || 0) + 1;
@@ -145,6 +151,87 @@ export default function ZipDashboard({
     reader.readAsArrayBuffer(file);
   };
 
+  // Handle pie chart click
+  const handlePieClick = (type: PieChartType, value: string) => {
+    // If clicking the same segment again, remove the filter
+    if (
+      activePieFilter &&
+      activePieFilter.type === type &&
+      activePieFilter.value === value
+    ) {
+      setActivePieFilter(null);
+      setFilters({});
+    } else {
+      // Set the active filter based on pie chart type
+      setActivePieFilter({ type, value });
+
+      // Set the filter based on the pie chart type
+      let filterKey: keyof ExcelRow;
+      switch (type) {
+        case "office":
+          filterKey = "Office";
+          break;
+        case "county":
+          filterKey = "County";
+          break;
+        case "region":
+          filterKey = "Region";
+          break;
+        default:
+          return;
+      }
+
+      setFilters({ [filterKey]: value });
+    }
+
+    // Reset to first page when applying new filter
+    setCurrentPage(1);
+  };
+
+  // Handle legend click
+  const handleLegendClick = (type: PieChartType) => (e: any) => {
+    // Extract the value from the clicked legend item
+    const value = e.value;
+    handlePieClick(type, value);
+  };
+
+  // Custom legend component with click handlers
+  const renderCustomLegend = (props: any, type: PieChartType) => {
+    const { payload } = props;
+
+    return (
+      <div className={styles.customLegend}>
+        {payload.map((entry: any, index: number) => {
+          const isActive =
+            activePieFilter &&
+            activePieFilter.type === type &&
+            activePieFilter.value === entry.value;
+
+          return (
+            <div
+              key={`legend-${index}`}
+              className={`${styles.legendItem} ${
+                isActive ? styles.activeLegend : ""
+              }`}
+              onClick={() => handlePieClick(type, entry.value)}
+              style={{ color: entry.color }}
+            >
+              <div
+                className={styles.legendColorBox}
+                style={{ backgroundColor: entry.color }}
+              />
+              <span>{entry.value}</span>
+              <span className={styles.legendCount}>
+                {" "}
+                ({entry.payload.value})
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   // Sorting functionality
   const requestSort = (key: keyof ExcelRow) => {
     let direction: "ascending" | "descending" = "ascending";
@@ -165,6 +252,26 @@ export default function ZipDashboard({
       [key]: value || undefined,
     }));
     setCurrentPage(1);
+
+    // Clear pie filter if user manually changes a filter
+    if (
+      activePieFilter &&
+      key === getFilterKeyFromPieType(activePieFilter.type)
+    ) {
+      setActivePieFilter(null);
+    }
+  };
+
+  // Helper function to get filter key from pie type
+  const getFilterKeyFromPieType = (type: PieChartType): keyof ExcelRow => {
+    switch (type) {
+      case "office":
+        return "Office";
+      case "county":
+        return "County";
+      case "region":
+        return "Region";
+    }
   };
 
   // Get unique values for filter dropdowns
@@ -265,6 +372,13 @@ export default function ZipDashboard({
     return sortConfig.direction === "ascending" ? "↑" : "↓";
   };
 
+  // Clear all filters
+  const clearFilters = () => {
+    setFilters({});
+    setActivePieFilter(null);
+    setCurrentPage(1);
+  };
+
   return (
     <div className={styles.dashboardContainer}>
       <div className={styles.header}>
@@ -290,6 +404,18 @@ export default function ZipDashboard({
 
       {error && <p className={styles.uploadError}>{error}</p>}
 
+      {/* Active Filter Display */}
+      {activePieFilter && (
+        <div className={styles.activeFilter}>
+          <span>
+            Showing data for {activePieFilter.type}: {activePieFilter.value}
+          </span>
+          <button onClick={clearFilters} className={styles.clearFilterButton}>
+            Clear Filter
+          </button>
+        </div>
+      )}
+
       {/* Visualization Section */}
       <div className={styles.visualizationSection}>
         <div className={styles.chartContainer}>
@@ -310,16 +436,35 @@ export default function ZipDashboard({
                     percent ? (percent * 100).toFixed(0) + "%" : "0%"
                   }`
                 }
+                onClick={(data) => handlePieClick("office", data.name)}
               >
                 {officeData.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
                     fill={COLORS[index % COLORS.length]}
+                    style={{
+                      cursor: "pointer",
+                      opacity:
+                        activePieFilter &&
+                        activePieFilter.type === "office" &&
+                        activePieFilter.value === entry.name
+                          ? 1
+                          : 0.8,
+                      stroke:
+                        activePieFilter &&
+                        activePieFilter.type === "office" &&
+                        activePieFilter.value === entry.name
+                          ? "#000"
+                          : "none",
+                      strokeWidth: 2,
+                    }}
                   />
                 ))}
               </Pie>
               <Tooltip />
-              <Legend />
+              <Legend
+                content={(props) => renderCustomLegend(props, "office")}
+              />
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -342,16 +487,35 @@ export default function ZipDashboard({
                     percent ? (percent * 100).toFixed(0) + "%" : "0%"
                   }`
                 }
+                onClick={(data) => handlePieClick("county", data.name)}
               >
                 {countyData.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
                     fill={COLORS[index % COLORS.length]}
+                    style={{
+                      cursor: "pointer",
+                      opacity:
+                        activePieFilter &&
+                        activePieFilter.type === "county" &&
+                        activePieFilter.value === entry.name
+                          ? 1
+                          : 0.8,
+                      stroke:
+                        activePieFilter &&
+                        activePieFilter.type === "county" &&
+                        activePieFilter.value === entry.name
+                          ? "#000"
+                          : "none",
+                      strokeWidth: 2,
+                    }}
                   />
                 ))}
               </Pie>
               <Tooltip />
-              <Legend />
+              <Legend
+                content={(props) => renderCustomLegend(props, "county")}
+              />
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -374,16 +538,35 @@ export default function ZipDashboard({
                     percent ? (percent * 100).toFixed(0) + "%" : "0%"
                   }`
                 }
+                onClick={(data) => handlePieClick("region", data.name)}
               >
                 {regionData.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
                     fill={COLORS[index % COLORS.length]}
+                    style={{
+                      cursor: "pointer",
+                      opacity:
+                        activePieFilter &&
+                        activePieFilter.type === "region" &&
+                        activePieFilter.value === entry.name
+                          ? 1
+                          : 0.8,
+                      stroke:
+                        activePieFilter &&
+                        activePieFilter.type === "region" &&
+                        activePieFilter.value === entry.name
+                          ? "#000"
+                          : "none",
+                      strokeWidth: 2,
+                    }}
                   />
                 ))}
               </Pie>
               <Tooltip />
-              <Legend />
+              <Legend
+                content={(props) => renderCustomLegend(props, "region")}
+              />
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -436,6 +619,14 @@ export default function ZipDashboard({
             >
               Export Selected
             </button>
+            {(Object.keys(filters).length > 0 || activePieFilter) && (
+              <button
+                onClick={clearFilters}
+                className={styles.clearFilterButton}
+              >
+                Clear Filters
+              </button>
+            )}
           </div>
         </div>
 
