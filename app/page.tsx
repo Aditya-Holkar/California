@@ -86,6 +86,11 @@ export default function Home() {
             <Link href="/MainQME" className={styles.link}>
               QME
             </Link>
+
+            <Link href="/Call" className={styles.link}>
+              Call
+            </Link>
+
             <Link href="/Management" className={styles.link}>
               Management
             </Link>

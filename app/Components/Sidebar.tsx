@@ -92,6 +92,15 @@ export default function Sidebar() {
                 </li>
                 <li>
                   <Link
+                    href="/Call"
+                    className={styles.sidebarLink}
+                    onClick={() => setIsOpen(false)}
+                  >
+                    📞 Call
+                  </Link>
+                </li>
+                <li>
+                  <Link
                     href="/Management"
                     className={styles.sidebarLink}
                     onClick={() => setIsOpen(false)}
