@@ -240,9 +240,18 @@ export default function ZipDashboard({
   const exportSelectedRows = () => {
     if (selectedRows.size === 0) return;
 
-    const selectedData = Array.from(selectedRows).map(
-      (index) => processedData[(currentPage - 1) * rowsPerPage + index]
-    );
+    let selectedData = [];
+
+    // Check if all rows on the current page are selected
+    if (selectedRows.size === paginatedData.length) {
+      // If all rows on page are selected, export all filtered data
+      selectedData = processedData;
+    } else {
+      // Export only the specifically selected rows
+      selectedData = Array.from(selectedRows).map(
+        (index) => processedData[(currentPage - 1) * rowsPerPage + index]
+      );
+    }
 
     const ws = XLSX.utils.json_to_sheet(selectedData);
     const wb = XLSX.utils.book_new();
