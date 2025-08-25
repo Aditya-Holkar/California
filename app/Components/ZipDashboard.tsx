@@ -11,6 +11,22 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  RadarChart,
+  Radar,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  ComposedChart,
+  Scatter,
 } from "recharts";
 import styles from "../styles/Zip.module.css";
 
@@ -36,7 +52,15 @@ type ZipDashboardProps = {
   excelData: ExcelRow[];
 };
 
-type PieChartType = "office" | "county" | "region";
+type PieChartType = "office" | "county" | "region" | "caseStatus";
+type ChartType =
+  | "pie"
+  | "bar"
+  | "line"
+  | "area"
+  | "radar"
+  | "donut"
+  | "composed";
 
 const COLORS = [
   "#0088FE",
@@ -45,6 +69,12 @@ const COLORS = [
   "#FF8042",
   "#8884D8",
   "#82CA9D",
+  "#FF6B6B",
+  "#4ECDC4",
+  "#45B7D1",
+  "#F9A602",
+  "#9F7AEA",
+  "#F25F5C",
 ];
 
 export default function ZipDashboard({
@@ -62,9 +92,21 @@ export default function ZipDashboard({
     type: PieChartType;
     value: string;
   } | null>(null);
+  const [chartType, setChartType] = useState<ChartType>("pie");
+  const [fullScreenChart, setFullScreenChart] = useState<{
+    isOpen: boolean;
+    title: string;
+    type: PieChartType;
+    data: any[];
+  }>({
+    isOpen: false,
+    title: "",
+    type: "office",
+    data: [],
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Prepare data for pie charts
+  // Prepare data for charts
   const officeData = useMemo(() => {
     const officeCounts = excelData.reduce((acc, row) => {
       acc[row.Office] = (acc[row.Office] || 0) + 1;
@@ -93,6 +135,17 @@ export default function ZipDashboard({
       return acc;
     }, {} as Record<string, number>);
     return Object.entries(regionCounts).map(([name, value]) => ({
+      name,
+      value,
+    }));
+  }, [excelData]);
+
+  const caseStatusData = useMemo(() => {
+    const caseStatusCounts = excelData.reduce((acc, row) => {
+      acc[row["Case Status"]] = (acc[row["Case Status"]] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    return Object.entries(caseStatusCounts).map(([name, value]) => ({
       name,
       value,
     }));
@@ -151,8 +204,8 @@ export default function ZipDashboard({
     reader.readAsArrayBuffer(file);
   };
 
-  // Handle pie chart click
-  const handlePieClick = (type: PieChartType, value: string) => {
+  // Handle chart click
+  const handleChartClick = (type: PieChartType, value: string) => {
     // If clicking the same segment again, remove the filter
     if (
       activePieFilter &&
@@ -162,10 +215,10 @@ export default function ZipDashboard({
       setActivePieFilter(null);
       setFilters({});
     } else {
-      // Set the active filter based on pie chart type
+      // Set the active filter based on chart type
       setActivePieFilter({ type, value });
 
-      // Set the filter based on the pie chart type
+      // Set the filter based on the chart type
       let filterKey: keyof ExcelRow;
       switch (type) {
         case "office":
@@ -176,6 +229,9 @@ export default function ZipDashboard({
           break;
         case "region":
           filterKey = "Region";
+          break;
+        case "caseStatus":
+          filterKey = "Case Status";
           break;
         default:
           return;
@@ -188,11 +244,42 @@ export default function ZipDashboard({
     setCurrentPage(1);
   };
 
-  // Handle legend click
-  const handleLegendClick = (type: PieChartType) => (e: any) => {
-    // Extract the value from the clicked legend item
-    const value = e.value;
-    handlePieClick(type, value);
+  // Open chart in full screen
+  const openFullScreenChart = (
+    title: string,
+    type: PieChartType,
+    data: any[]
+  ) => {
+    setFullScreenChart({
+      isOpen: true,
+      title,
+      type,
+      data,
+    });
+  };
+
+  // Close full screen chart
+  const closeFullScreenChart = () => {
+    setFullScreenChart({
+      isOpen: false,
+      title: "",
+      type: "office",
+      data: [],
+    });
+  };
+
+  // Helper function to get filter key from pie type
+  const getFilterKeyFromPieType = (type: PieChartType): keyof ExcelRow => {
+    switch (type) {
+      case "office":
+        return "Office";
+      case "county":
+        return "County";
+      case "region":
+        return "Region";
+      case "caseStatus":
+        return "Case Status";
+    }
   };
 
   // Custom legend component with click handlers
@@ -213,7 +300,7 @@ export default function ZipDashboard({
               className={`${styles.legendItem} ${
                 isActive ? styles.activeLegend : ""
               }`}
-              onClick={() => handlePieClick(type, entry.value)}
+              onClick={() => handleChartClick(type, entry.value)}
               style={{ color: entry.color }}
             >
               <div
@@ -253,24 +340,12 @@ export default function ZipDashboard({
     }));
     setCurrentPage(1);
 
-    // Clear pie filter if user manually changes a filter
+    // Clear chart filter if user manually changes a filter
     if (
       activePieFilter &&
       key === getFilterKeyFromPieType(activePieFilter.type)
     ) {
       setActivePieFilter(null);
-    }
-  };
-
-  // Helper function to get filter key from pie type
-  const getFilterKeyFromPieType = (type: PieChartType): keyof ExcelRow => {
-    switch (type) {
-      case "office":
-        return "Office";
-      case "county":
-        return "County";
-      case "region":
-        return "Region";
     }
   };
 
@@ -379,6 +454,340 @@ export default function ZipDashboard({
     setCurrentPage(1);
   };
 
+  // Handle bar click - fixed TypeScript error
+  const handleBarClick = (data: any, type: PieChartType) => {
+    if (data && data.activePayload && data.activePayload[0]) {
+      const value = data.activePayload[0].payload.name;
+      handleChartClick(type, value);
+    }
+  };
+
+  // Render chart based on selected type
+  const renderChart = (
+    data: any[],
+    title: string,
+    type: PieChartType,
+    isFullScreen = false
+  ) => {
+    const chartHeight = isFullScreen ? 400 : 450;
+    const outerRadius = isFullScreen ? 130 : 70;
+    const innerRadius = isFullScreen ? 70 : 40;
+
+    switch (chartType) {
+      case "pie":
+        return (
+          <ResponsiveContainer width="100%" height={chartHeight}>
+            <PieChart>
+              <Pie
+                data={data}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                outerRadius={outerRadius}
+                fill="#8884d8"
+                dataKey="value"
+                nameKey="name"
+                label={({ name, percent }) =>
+                  `${name}: ${
+                    percent ? (percent * 100).toFixed(0) + "%" : "0%"
+                  }`
+                }
+                onClick={(data) => handleChartClick(type, data.name)}
+              >
+                {data.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                    style={{
+                      cursor: "pointer",
+                      opacity:
+                        activePieFilter &&
+                        activePieFilter.type === type &&
+                        activePieFilter.value === entry.name
+                          ? 1
+                          : 0.8,
+                      stroke:
+                        activePieFilter &&
+                        activePieFilter.type === type &&
+                        activePieFilter.value === entry.name
+                          ? "#000"
+                          : "none",
+                      strokeWidth: 2,
+                    }}
+                  />
+                ))}
+              </Pie>
+              <Tooltip />
+              {!isFullScreen && (
+                <Legend content={(props) => renderCustomLegend(props, type)} />
+              )}
+            </PieChart>
+          </ResponsiveContainer>
+        );
+      case "donut":
+        return (
+          <ResponsiveContainer width="100%" height={chartHeight}>
+            <PieChart>
+              <Pie
+                data={data}
+                cx="50%"
+                cy="50%"
+                innerRadius={innerRadius}
+                outerRadius={outerRadius}
+                fill="#8884d8"
+                dataKey="value"
+                nameKey="name"
+                label={({ name, percent }) =>
+                  `${name}: ${
+                    percent ? (percent * 100).toFixed(0) + "%" : "0%"
+                  }`
+                }
+                onClick={(data) => handleChartClick(type, data.name)}
+              >
+                {data.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                    style={{
+                      cursor: "pointer",
+                      opacity:
+                        activePieFilter &&
+                        activePieFilter.type === type &&
+                        activePieFilter.value === entry.name
+                          ? 1
+                          : 0.8,
+                      stroke:
+                        activePieFilter &&
+                        activePieFilter.type === type &&
+                        activePieFilter.value === entry.name
+                          ? "#000"
+                          : "none",
+                      strokeWidth: 2,
+                    }}
+                  />
+                ))}
+              </Pie>
+              <Tooltip />
+              {!isFullScreen && (
+                <Legend content={(props) => renderCustomLegend(props, type)} />
+              )}
+            </PieChart>
+          </ResponsiveContainer>
+        );
+      case "bar":
+        return (
+          <ResponsiveContainer width="100%" height={chartHeight}>
+            <BarChart
+              data={data}
+              margin={{ top: 20, right: 30, left: 20, bottom: 70 }}
+              onClick={(data) => handleBarClick(data, type)}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" angle={-45} textAnchor="end" height={60} />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="value" fill="#8884d8">
+                {data.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                    style={{
+                      cursor: "pointer",
+                      opacity:
+                        activePieFilter &&
+                        activePieFilter.type === type &&
+                        activePieFilter.value === entry.name
+                          ? 1
+                          : 0.8,
+                    }}
+                  />
+                ))}
+              </Bar>
+              {!isFullScreen && (
+                <Legend content={(props) => renderCustomLegend(props, type)} />
+              )}
+            </BarChart>
+          </ResponsiveContainer>
+        );
+      case "line":
+        return (
+          <ResponsiveContainer width="100%" height={chartHeight}>
+            <LineChart
+              data={data}
+              margin={{ top: 20, right: 30, left: 20, bottom: 70 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" angle={-45} textAnchor="end" height={60} />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Line
+                type="monotone"
+                dataKey="value"
+                stroke="#8884d8"
+                activeDot={{
+                  r: 8,
+                  onClick: (_, event) => {
+                    if (event && event.payload && event.payload.name) {
+                      handleChartClick(type, event.payload.name);
+                    }
+                  },
+                }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        );
+      case "area":
+        return (
+          <ResponsiveContainer width="100%" height={chartHeight}>
+            <AreaChart
+              data={data}
+              margin={{ top: 20, right: 30, left: 20, bottom: 70 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" angle={-45} textAnchor="end" height={60} />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Area
+                type="monotone"
+                dataKey="value"
+                stroke="#8884d8"
+                fill="#8884d8"
+                activeDot={{
+                  r: 8,
+                  onClick: (_, event) => {
+                    if (event && event.payload && event.payload.name) {
+                      handleChartClick(type, event.payload.name);
+                    }
+                  },
+                }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        );
+      case "radar":
+        return (
+          <ResponsiveContainer width="100%" height={chartHeight}>
+            <RadarChart
+              data={data}
+              margin={{ top: 20, right: 30, left: 20, bottom: 70 }}
+            >
+              <PolarGrid />
+              <PolarAngleAxis dataKey="name" />
+              <PolarRadiusAxis />
+              <Tooltip />
+              <Legend />
+              <Radar
+                name="Value"
+                dataKey="value"
+                stroke="#8884d8"
+                fill="#8884d8"
+                fillOpacity={0.6}
+                onClick={(data) => handleChartClick(type, data.name)}
+              />
+            </RadarChart>
+          </ResponsiveContainer>
+        );
+      case "composed":
+        return (
+          <ResponsiveContainer width="100%" height={chartHeight}>
+            <ComposedChart
+              data={data}
+              margin={{ top: 20, right: 30, left: 20, bottom: 70 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" angle={-45} textAnchor="end" height={60} />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar
+                dataKey="value"
+                fill="#8884d8"
+                onClick={(data) => handleBarClick(data, type)}
+              >
+                {data.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                    style={{
+                      cursor: "pointer",
+                      opacity:
+                        activePieFilter &&
+                        activePieFilter.type === type &&
+                        activePieFilter.value === entry.name
+                          ? 1
+                          : 0.8,
+                    }}
+                  />
+                ))}
+              </Bar>
+              <Line
+                type="monotone"
+                dataKey="value"
+                stroke="#ff7300"
+                activeDot={{
+                  r: 8,
+                  onClick: (_, event) => {
+                    if (event && event.payload && event.payload.name) {
+                      handleChartClick(type, event.payload.name);
+                    }
+                  },
+                }}
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
+        );
+      default:
+        return null;
+    }
+  };
+
+  // Full screen chart modal
+  const FullScreenChartModal = () => {
+    if (!fullScreenChart.isOpen) return null;
+
+    return (
+      <div className={styles.fullScreenModal}>
+        <div className={styles.modalContent}>
+          <div className={styles.modalHeader}>
+            <h2>{fullScreenChart.title}</h2>
+            <button
+              className={styles.closeButton}
+              onClick={closeFullScreenChart}
+            >
+              ×
+            </button>
+          </div>
+          <div className={styles.modalBody}>
+            <div className={styles.modalChart}>
+              {renderChart(
+                fullScreenChart.data,
+                fullScreenChart.title,
+                fullScreenChart.type,
+                true
+              )}
+            </div>
+            <div className={styles.modalLegend}>
+              <h3 className={styles.legendTitle}>Legend</h3>
+              {renderCustomLegend(
+                {
+                  payload: fullScreenChart.data.map((item, index) => ({
+                    value: item.name,
+                    color: COLORS[index % COLORS.length],
+                    payload: item,
+                  })),
+                },
+                fullScreenChart.type
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className={styles.dashboardContainer}>
       <div className={styles.header}>
@@ -416,161 +825,105 @@ export default function ZipDashboard({
         </div>
       )}
 
+      {/* Chart Type Toggle */}
+      <div className={styles.chartTypeToggle}>
+        <label>Chart Type: </label>
+        <select
+          value={chartType}
+          onChange={(e) => setChartType(e.target.value as ChartType)}
+        >
+          <option value="pie">Pie Chart</option>
+          <option value="donut">Donut Chart</option>
+          <option value="bar">Bar Chart</option>
+          {/* <option value="line">Line Chart</option>
+          <option value="area">Area Chart</option>
+          <option value="radar">Radar Chart</option>
+          <option value="composed">Composed Chart</option> */}
+        </select>
+      </div>
+
       {/* Visualization Section */}
       <div className={styles.visualizationSection}>
         <div className={styles.chartContainer}>
-          <h3>Office Distribution</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={officeData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey="value"
-                nameKey="name"
-                label={({ name, percent }) =>
-                  `${name}: ${
-                    percent ? (percent * 100).toFixed(0) + "%" : "0%"
-                  }`
-                }
-                onClick={(data) => handlePieClick("office", data.name)}
-              >
-                {officeData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={COLORS[index % COLORS.length]}
-                    style={{
-                      cursor: "pointer",
-                      opacity:
-                        activePieFilter &&
-                        activePieFilter.type === "office" &&
-                        activePieFilter.value === entry.name
-                          ? 1
-                          : 0.8,
-                      stroke:
-                        activePieFilter &&
-                        activePieFilter.type === "office" &&
-                        activePieFilter.value === entry.name
-                          ? "#000"
-                          : "none",
-                      strokeWidth: 2,
-                    }}
-                  />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend
-                content={(props) => renderCustomLegend(props, "office")}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+          <div className={styles.chartHeader}>
+            <h3>Office Distribution</h3>
+            <button
+              className={styles.fullScreenButton}
+              onClick={() =>
+                openFullScreenChart("Office Distribution", "office", officeData)
+              }
+            >
+              Open Full Screen
+            </button>
+          </div>
+          {renderChart(officeData, "Office Distribution", "office")}
         </div>
 
         <div className={styles.chartContainer}>
-          <h3>Counties Distribution</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={countyData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey="value"
-                nameKey="name"
-                label={({ name, percent }) =>
-                  `${name}: ${
-                    percent ? (percent * 100).toFixed(0) + "%" : "0%"
-                  }`
-                }
-                onClick={(data) => handlePieClick("county", data.name)}
-              >
-                {countyData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={COLORS[index % COLORS.length]}
-                    style={{
-                      cursor: "pointer",
-                      opacity:
-                        activePieFilter &&
-                        activePieFilter.type === "county" &&
-                        activePieFilter.value === entry.name
-                          ? 1
-                          : 0.8,
-                      stroke:
-                        activePieFilter &&
-                        activePieFilter.type === "county" &&
-                        activePieFilter.value === entry.name
-                          ? "#000"
-                          : "none",
-                      strokeWidth: 2,
-                    }}
-                  />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend
-                content={(props) => renderCustomLegend(props, "county")}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+          <div className={styles.chartHeader}>
+            <h3>Counties Distribution</h3>
+            <button
+              className={styles.fullScreenButton}
+              onClick={() =>
+                openFullScreenChart(
+                  "Counties Distribution",
+                  "county",
+                  countyData
+                )
+              }
+            >
+              Open Full Screen
+            </button>
+          </div>
+          {renderChart(countyData, "Counties Distribution", "county")}
         </div>
 
         <div className={styles.chartContainer}>
-          <h3>Regions Distribution</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={regionData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey="value"
-                nameKey="name"
-                label={({ name, percent }) =>
-                  `${name}: ${
-                    percent ? (percent * 100).toFixed(0) + "%" : "0%"
-                  }`
-                }
-                onClick={(data) => handlePieClick("region", data.name)}
-              >
-                {regionData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={COLORS[index % COLORS.length]}
-                    style={{
-                      cursor: "pointer",
-                      opacity:
-                        activePieFilter &&
-                        activePieFilter.type === "region" &&
-                        activePieFilter.value === entry.name
-                          ? 1
-                          : 0.8,
-                      stroke:
-                        activePieFilter &&
-                        activePieFilter.type === "region" &&
-                        activePieFilter.value === entry.name
-                          ? "#000"
-                          : "none",
-                      strokeWidth: 2,
-                    }}
-                  />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend
-                content={(props) => renderCustomLegend(props, "region")}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+          <div className={styles.chartHeader}>
+            <h3>Regions Distribution</h3>
+            <button
+              className={styles.fullScreenButton}
+              onClick={() =>
+                openFullScreenChart(
+                  "Regions Distribution",
+                  "region",
+                  regionData
+                )
+              }
+            >
+              Open Full Screen
+            </button>
+          </div>
+          {renderChart(regionData, "Regions Distribution", "region")}
+        </div>
+
+        {/* Case Status Distribution Chart */}
+        <div className={styles.chartContainer}>
+          <div className={styles.chartHeader}>
+            <h3>Case Status Distribution</h3>
+            <button
+              className={styles.fullScreenButton}
+              onClick={() =>
+                openFullScreenChart(
+                  "Case Status Distribution",
+                  "caseStatus",
+                  caseStatusData
+                )
+              }
+            >
+              Open Full Screen
+            </button>
+          </div>
+          {renderChart(
+            caseStatusData,
+            "Case Status Distribution",
+            "caseStatus"
+          )}
         </div>
       </div>
+
+      {/* Full Screen Chart Modal */}
+      <FullScreenChartModal />
 
       {/* Data Table Section */}
       <div className={styles.tableSection}>
