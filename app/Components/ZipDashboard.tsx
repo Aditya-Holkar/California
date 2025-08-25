@@ -454,6 +454,25 @@ export default function ZipDashboard({
     setCurrentPage(1);
   };
 
+  // Handle bar click without payload - use direct data access
+  const handleDirectBarClick = (data: any, type: PieChartType) => {
+    if (data && data.activeLabel) {
+      handleChartClick(type, data.activeLabel);
+    }
+  };
+
+  // Handle cell click for bar charts
+  const handleBarCellClick = (name: string, type: PieChartType) => {
+    handleChartClick(type, name);
+  };
+
+  // Handle dot click for line/area charts
+  const handleDotClick = (data: any, type: PieChartType) => {
+    if (data && data.name) {
+      handleChartClick(type, data.name);
+    }
+  };
+
   // Handle bar click - fixed TypeScript error
   const handleBarClick = (data: any, type: PieChartType) => {
     if (data && data.activePayload && data.activePayload[0]) {
@@ -610,7 +629,7 @@ export default function ZipDashboard({
             </BarChart>
           </ResponsiveContainer>
         );
-      case "line":
+      /*   case "line":
         return (
           <ResponsiveContainer width="100%" height={chartHeight}>
             <LineChart
@@ -738,7 +757,7 @@ export default function ZipDashboard({
               />
             </ComposedChart>
           </ResponsiveContainer>
-        );
+        );*/
       default:
         return null;
     }
