@@ -51,6 +51,10 @@ export default function Home() {
 
   return (
     <div className={styles.container}>
+      {/* Batman-themed background elements */}
+      <div className={styles.batSignal}></div>
+      <div className={styles.bats}></div>
+
       <h1 className={styles.title}>
         Scr*w your qualifications.
         <br />
@@ -59,9 +63,9 @@ export default function Home() {
           <span
             onClick={() => setTapCount((prev) => prev + 1)}
             style={{ cursor: "pointer" }}
-            className={styles.pillEmoji}
+            className={styles.batmanLogo}
           >
-            💊
+            🦇
           </span>
         )}
         ?
@@ -103,7 +107,7 @@ export default function Home() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter secret password"
+                  placeholder="Enter Batcave access code"
                   className={styles.passwordInput}
                   autoFocus
                 />
