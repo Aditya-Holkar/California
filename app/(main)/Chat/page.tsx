@@ -114,6 +114,7 @@ export default function Home() {
     return "New Chat";
   };
 
+  // app/page.tsx (updated fetch call)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
@@ -154,33 +155,20 @@ export default function Home() {
     setInput("");
 
     try {
-      const response = await fetch(
-        "https://openrouter.ai/api/v1/chat/completions",
-        {
-          method: "POST",
-          headers: {
-            Authorization:
-              "Bearer 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",
-            "HTTP-Referer": window.location.origin,
-            "X-Title": "WCAB Assistant",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "deepseek/deepseek-r1-0528:free",
-            messages: [
-              {
-                role: "system",
-                content:
-                  "You are a legal assistant specializing in California Workers' Compensation Appeals Board (WCAB) matters and employment law. Provide detailed, step-by-step guidance. Focus on California-specific regulations and procedures. Be precise and cite relevant laws when possible.",
-              },
-              ...updatedChat.messages,
-            ],
-          }),
-        }
-      );
+      // Use your API route instead of direct OpenRouter call
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messages: updatedChat.messages,
+        }),
+      });
 
       if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.error || `API error: ${response.status}`);
       }
 
       const data = await response.json();
@@ -207,7 +195,11 @@ export default function Home() {
       );
     } catch (err) {
       console.error("Error fetching response:", err);
-      setError("Failed to get response. Please try again.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to get response. Please try again."
+      );
     } finally {
       setIsLoading(false);
     }

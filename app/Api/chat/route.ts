@@ -44,9 +44,9 @@ export async function POST(req: NextRequest) {
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer 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`,
-          "HTTP-Referer": req.headers.get("origin") || "http://localhost:3000",
-          "X-Title": "Worker's Compensation Assistant",
+          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          "HTTP-Referer": req.headers.get("origin") || "",
+          "X-Title": "WCAB Assistant",
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
