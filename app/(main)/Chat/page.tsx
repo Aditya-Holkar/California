@@ -3,7 +3,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import styles from "../styles/Chat.module.css";
+import styles from "../../styles/Chat.module.css";
 
 interface Message {
   role: "user" | "assistant";

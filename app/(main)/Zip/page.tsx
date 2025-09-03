@@ -7,12 +7,11 @@ import { californiaAreas, CityData } from "../../Utils/californiaData";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import styles from "../../styles/Zip.module.css";
-import PhoneInput from "react-phone-number-input";
+// import "react-phone-number-input/style.css";
 import ZipDashboard from "@/app/Components/ZipDashboard";
 
 type ExcelRow = {
   "ZIP Code": string;
-  // Name: string;
   Office: string;
   "Case Name": string;
   "Case #": string;
@@ -24,8 +23,26 @@ type ExcelRow = {
   "Added On": string;
 };
 
+// Update the ZiptasticResponse type to make all properties optional
+type ZiptasticResponse = {
+  city?: string;
+  state?: string;
+  post_code?: string;
+  country?: string;
+  county?: string;
+  timezone?: {
+    timezone_identifier: string;
+    timezone_abbr: string;
+    utc_offset: number;
+  };
+  latitude?: number;
+  longitude?: number;
+};
+
 export default function Zip() {
-  const [searchMode, setSearchMode] = useState<"zip" | "address" | null>(null);
+  const [searchMode, setSearchMode] = useState<
+    "zip" | "address" | "us-zip" | null
+  >(null);
   const [zipCode, setZipCode] = useState<string>("");
   const [fullAddress, setFullAddress] = useState<string>("");
   const [address, setAddress] = useState<string>("");
@@ -47,8 +64,11 @@ export default function Zip() {
   const [excelData, setExcelData] = useState<ExcelRow[]>([]);
   const [showExcelPanel, setShowExcelPanel] = useState<boolean>(false);
   const [fileName, setFileName] = useState<string>("California_Zip_Data.xlsx");
-
   const [office, setOffice] = useState<string>("");
+  const [usZipResults, setUsZipResults] = useState<ZiptasticResponse | null>(
+    null
+  );
+  const [usZipLoading, setUsZipLoading] = useState<boolean>(false);
 
   useEffect(() => {
     const savedData = localStorage.getItem("californiaZipData");
@@ -64,7 +84,7 @@ export default function Zip() {
   const handleUploadedData = (newData: any[]) => {
     const transformedData = newData.map((item) => ({
       ...item,
-      "Added On": item["Added On"] || new Date().toISOString(), // Ensure required field
+      "Added On": item["Added On"] || new Date().toISOString(),
     }));
 
     const existingDataMap = new Map(
@@ -78,7 +98,6 @@ export default function Zip() {
     setExcelData((prev) => [...prev, ...filteredNewData]);
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const allCities: CityData[] = [
     ...californiaAreas["True list"],
     ...californiaAreas["Incorporated Cities"].filter(
@@ -103,16 +122,12 @@ export default function Zip() {
   };
 
   const extractZipFromAddress = (addr: string): string | null => {
-    // Trim and clean the address
     const cleanAddr = addr.trim();
-
-    // First try to find ZIP+4 at the end (5 digits, hyphen, 4 digits)
     const zipPlus4Match = cleanAddr.match(/(\b\d{5}-\d{4}\b)[^\d]*$/);
     if (zipPlus4Match) {
-      return zipPlus4Match[1].split("-")[0]; // Return just the first 5 digits
+      return zipPlus4Match[1].split("-")[0];
     }
 
-    // Then try standard 5-digit ZIP at the end
     const zipMatch = cleanAddr.match(/(\b\d{5}\b)[^\d]*$/);
     return zipMatch ? zipMatch[1] : null;
   };
@@ -146,6 +161,7 @@ export default function Zip() {
     setError(null);
     setResults([]);
     setShowOthers(false);
+    setUsZipResults(null);
 
     let currentZip = zipCode;
 
@@ -158,7 +174,6 @@ export default function Zip() {
       currentZip = extractedZip;
     }
 
-    // Strip any ZIP+4 suffix if present
     currentZip = currentZip.split("-")[0];
 
     if (!validateZipCode(currentZip)) {
@@ -166,10 +181,8 @@ export default function Zip() {
       return;
     }
 
-    // Search through all city categories
     const matched: CityData[] = [];
 
-    // Check True list first - only take the first match
     const trueListMatch = californiaAreas["True list"].find((city) =>
       city.zipCodes.includes(currentZip)
     );
@@ -177,7 +190,6 @@ export default function Zip() {
       matched.push(trueListMatch);
     }
 
-    // Then check Incorporated Cities (excluding duplicates with True list)
     californiaAreas["Incorporated Cities"].forEach((city) => {
       if (
         city.zipCodes.includes(currentZip) &&
@@ -187,7 +199,6 @@ export default function Zip() {
       }
     });
 
-    // Then check CDPs (excluding duplicates with True list)
     californiaAreas["Census-Designated Places (CDP)"].forEach((city) => {
       if (
         city.zipCodes.includes(currentZip) &&
@@ -202,6 +213,53 @@ export default function Zip() {
       setZipCode(currentZip);
     } else {
       setError("ZIP code not found in our California database");
+    }
+  };
+
+  const searchUsZipCode = async () => {
+    setError(null);
+    setUsZipResults(null);
+    setResults([]);
+    setShowOthers(false);
+
+    if (!validateZipCode(zipCode)) {
+      setError("Please enter a valid 5-digit ZIP code");
+      return;
+    }
+
+    const currentZip = zipCode.split("-")[0];
+    setUsZipLoading(true);
+
+    try {
+      const response = await fetch(`https://ziptasticapi.com/${currentZip}`);
+
+      if (!response.ok) {
+        // Handle different HTTP status codes
+        if (response.status === 404) {
+          throw new Error("ZIP code not found");
+        } else if (response.status === 400) {
+          throw new Error("Invalid ZIP code format");
+        } else {
+          throw new Error("Failed to fetch zip code data");
+        }
+      }
+
+      const data: ZiptasticResponse = await response.json();
+
+      // Check if we got a valid response
+      if (!data || !data.country) {
+        throw new Error("Invalid response from server");
+      }
+
+      if (data.country !== "US") {
+        throw new Error("This ZIP code is not in the United States");
+      }
+
+      setUsZipResults(data);
+    } catch (err: any) {
+      setError(err.message || "Error fetching ZIP code information");
+    } finally {
+      setUsZipLoading(false);
     }
   };
 
@@ -223,12 +281,10 @@ export default function Zip() {
     if (currentCityToAdd) {
       const newRow: ExcelRow = {
         "ZIP Code": zipCode,
-        // Name: tempName,
         Office: office,
         "Case Name": searchMode === "zip" ? tempCaseName : "",
         "Case #": tempCaseNumber,
-        // "Case Status": searchMode === "zip" ? tempCaseStatus : "", // Added Case Status
-        "Case Status": tempCaseStatus, // Added Case Status
+        "Case Status": tempCaseStatus,
         City: currentCityToAdd.city,
         County: currentCityToAdd.county,
         Region: currentCityToAdd.region,
@@ -268,12 +324,10 @@ export default function Zip() {
     const newRows: ExcelRow[] = results.map((city) => {
       const newRow: ExcelRow = {
         "ZIP Code": zipCode,
-        // Name: tempName,
         Office: office,
         "Case Name": searchMode === "zip" ? tempCaseName : "",
         "Case #": tempCaseNumber,
-        // "Case Status": searchMode === "zip" ? tempCaseStatus : "", // Added Case Status
-        "Case Status": tempCaseStatus, // Added Case Status
+        "Case Status": tempCaseStatus,
         City: city.city,
         County: city.county,
         Region: city.region,
@@ -308,26 +362,23 @@ export default function Zip() {
       return;
     }
 
-    // Prepare data with all required fields
     const dataToExport = excelData.map((row) => ({
       "ZIP Code": row["ZIP Code"],
       Office: row["Office"],
       "Case Name": row["Case Name"],
       "Case #": row["Case #"],
-      "Case Status": row["Case Status"], // Ensure Case Status is included
+      "Case Status": row["Case Status"],
       City: row["City"],
       County: row["County"],
       Region: row["Region"],
       "Added On": row["Added On"],
-      ...(row.Address && { Address: row.Address }), // Conditionally include Address
+      ...(row.Address && { Address: row.Address }),
     }));
 
-    // Create worksheet and workbook
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "ZipCodeData");
 
-    // Generate Excel file and trigger download
     XLSX.writeFile(workbook, fileName);
   };
 
@@ -342,6 +393,7 @@ export default function Zip() {
     setFullAddress(input);
     setResults([]);
     setError(null);
+    setUsZipResults(null);
 
     const { name: extractedName, address: extractedAddress } =
       extractNameFromInput(input);
@@ -356,6 +408,7 @@ export default function Zip() {
     setName("");
     setAddress("");
     setFullAddress("");
+    setUsZipResults(null);
   };
 
   const handleCaseNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -432,24 +485,12 @@ export default function Zip() {
               <label className={styles.label}>Case Status:</label>
               <input
                 type="text"
-                value={caseStatus}
-                onChange={(e) => setCaseStatus(e.target.value)}
-                placeholder="Enter case status"
+                value={tempCaseStatus}
+                onChange={(e) => setTempCaseStatus(e.target.value)}
                 className={styles.input}
               />
             </div>
 
-            {/* {searchMode === "zip" && (
-              <div className={styles.inputGroup}>
-                <label className={styles.label}>Case Status:</label>
-                <input
-                  type="text"
-                  value={tempCaseStatus}
-                  onChange={(e) => setTempCaseStatus(e.target.value)}
-                  className={styles.input}
-                />
-              </div>
-            )} */}
             <div className={styles.modalButtons}>
               <button
                 onClick={() => {
@@ -475,7 +516,6 @@ export default function Zip() {
       )}
 
       <div className={styles.mainContent}>
-        {/* Left side - Form */}
         <div className={styles.formSection}>
           <div className={styles.card}>
             <h1 className={styles.title}>California Information by Zip</h1>
@@ -489,21 +529,20 @@ export default function Zip() {
                   onClick={() => setSearchMode("zip")}
                   className={styles.searchOptionButton}
                 >
-                  Search by ZIP Code Only
+                  Search California by ZIP Code
                 </button>
-                {/* <button
-                onClick={() => setSearchMode("address")}
-                className={styles.searchOptionButton}
-              >
-                Search by Full Address
-              </button> */}
+                <button
+                  onClick={() => setSearchMode("us-zip")}
+                  className={styles.searchOptionButton}
+                >
+                  Search US by ZIP Code
+                </button>
               </div>
             ) : (
               <>
                 {searchMode === "zip" && (
                   <>
                     <div className={styles.twoColumnForm}>
-                      {/* Left Column */}
                       <div className={styles.formColumn}>
                         <div className={styles.inputGroup}>
                           <label className={styles.label}>
@@ -542,7 +581,6 @@ export default function Zip() {
                         </div>
                       </div>
 
-                      {/* Right Column */}
                       <div className={styles.formColumn}>
                         <div className={styles.inputGroup}>
                           <label className={styles.label}>Office:</label>
@@ -575,7 +613,6 @@ export default function Zip() {
                       </div>
                     </div>
 
-                    {/* Full width buttons below the columns */}
                     <div className={styles.formActions}>
                       <button onClick={findCityByZip} className={styles.button}>
                         Find Location
@@ -592,6 +629,7 @@ export default function Zip() {
                           setCaseStatus("");
                           setResults([]);
                           setError(null);
+                          setUsZipResults(null);
                         }}
                         className={styles.secondaryButton}
                       >
@@ -601,45 +639,41 @@ export default function Zip() {
                   </>
                 )}
 
-                {/* {searchMode === "address" && (
-                <div className={styles.inputGroup}>
-                  <label className={styles.label}>Enter full address:</label>
-                  <input
-                    type="text"
-                    value={fullAddress}
-                    onChange={handleAddressInputChange}
-                    placeholder="e.g., John Smith, 123 Main Street, Anytown, CA 91234 or 91234-1234"
-                    className={styles.input}
-                  />
-                  {name && (
-                    <div className={styles.namePreview}>
-                      <span className={styles.smallText}>Detected name: </span>
-                      <span className={styles.mediumText}>{name}</span>
+                {searchMode === "us-zip" && (
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>Enter US ZIP Code:</label>
+                    <input
+                      type="text"
+                      value={zipCode}
+                      onChange={handleZipInputChange}
+                      placeholder="e.g., 10001 or 90210"
+                      className={styles.input}
+                      maxLength={5}
+                    />
+
+                    <div className={styles.formActions}>
+                      <button
+                        onClick={searchUsZipCode}
+                        className={styles.button}
+                        disabled={usZipLoading}
+                      >
+                        {usZipLoading ? "Searching..." : "Find Location"}
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setSearchMode(null);
+                          setZipCode("");
+                          setUsZipResults(null);
+                          setError(null);
+                        }}
+                        className={styles.secondaryButton}
+                      >
+                        Change Search Method
+                      </button>
                     </div>
-                  )}
-                </div>
-              )} */}
-
-                {/* <button onClick={findCityByZip} className={styles.button}>
-                  Find Location
-                </button>
-
-                <button
-                  onClick={() => {
-                    setSearchMode(null);
-                    setZipCode("");
-                    setFullAddress("");
-                    setName("");
-                    setCaseName("");
-                    setCaseNumber("");
-                    setCaseStatus("");
-                    setResults([]);
-                    setError(null);
-                  }}
-                  className={styles.secondaryButton}
-                >
-                  Change Search Method
-                </button> */}
+                  </div>
+                )}
               </>
             )}
 
@@ -713,6 +747,77 @@ export default function Zip() {
               </div>
             )}
 
+            {usZipResults && (
+              <div className={styles.resultsContainer}>
+                <div className={styles.resultCard}>
+                  <h3 className={styles.resultTitle}>
+                    US Zip Code Information
+                  </h3>
+                  <div>
+                    <span className={styles.smallText}>ZIP Code:</span>
+                    <span className={styles.mediumText}>{zipCode}</span>
+                  </div>
+                  <div>
+                    <span className={styles.smallText}>City: </span>
+                    <span className={styles.mediumText}>
+                      {usZipResults.city || "N/A"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className={styles.smallText}>State: </span>
+                    <span className={styles.mediumText}>
+                      {usZipResults.state || "N/A"}
+                    </span>
+                  </div>
+                  {/* <div>
+                    <span className={styles.smallText}>County: </span>
+                    <span className={styles.mediumText}>
+                      {usZipResults.county || "N/A"}
+                    </span>
+                  </div> */}
+                  <div>
+                    <span className={styles.smallText}>Country: </span>
+                    <span className={styles.mediumText}>
+                      {usZipResults.country || "N/A"}
+                    </span>
+                  </div>
+                  {/* {usZipResults.timezone && (
+                    <>
+                      <div>
+                        <span className={styles.smallText}>Timezone: </span>
+                        <span className={styles.mediumText}>
+                          {usZipResults.timezone.timezone_identifier} (
+                          {usZipResults.timezone.timezone_abbr})
+                        </span>
+                      </div>
+                      <div>
+                        <span className={styles.smallText}>UTC Offset: </span>
+                        <span className={styles.mediumText}>
+                          {usZipResults.timezone.utc_offset >= 0 ? "+" : ""}
+                          {usZipResults.timezone.utc_offset}
+                        </span>
+                      </div>
+                    </>
+                  )} */}
+                  {/* {usZipResults.latitude !== undefined &&
+                  usZipResults.longitude !== undefined ? (
+                    <div>
+                      <span className={styles.smallText}>Coordinates: </span>
+                      <span className={styles.mediumText}>
+                        {usZipResults.latitude.toFixed(4)},{" "}
+                        {usZipResults.longitude.toFixed(4)}
+                      </span>
+                    </div>
+                  ) : (
+                    <div>
+                      <span className={styles.smallText}>Coordinates: </span>
+                      <span className={styles.mediumText}>N/A</span>
+                    </div>
+                  )} */}
+                </div>
+              </div>
+            )}
+
             {otherResults.length > 0 && (
               <div>
                 <button
@@ -767,7 +872,7 @@ export default function Zip() {
             )}
           </div>
         </div>
-        {/* Right side - Dashboard */}
+
         <div className={styles.dashboardSection}>
           <ZipDashboard onUpload={handleUploadedData} excelData={excelData} />
         </div>
@@ -835,9 +940,6 @@ export default function Zip() {
                 excelData.map((row, i) => (
                   <div key={i} className={styles.dataItem}>
                     <div className={styles.dataItemHeader}>
-                      {/* <span className={styles.mediumText}>
-                        {row.Name || "No name"}
-                      </span> */}
                       {searchMode === "zip" && row["Case Name"] && (
                         <span className={styles.mediumText}>
                           {row["Case Name"]}
@@ -848,9 +950,6 @@ export default function Zip() {
                           {row["Case #"]}
                         </span>
                       )}
-                      {/* <span className={styles.dataItemMeta}>
-                        {row["Added On"]}
-                      </span> */}
                       <button
                         onClick={() => {
                           setExcelData((prev) =>
