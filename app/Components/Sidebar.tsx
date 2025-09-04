@@ -77,6 +77,15 @@ export default function Sidebar() {
                 💵 Depo Bill
               </Link>
             </li>
+            <li>
+              <Link
+                href="/Visualize"
+                className={styles.sidebarLink}
+                onClick={() => setIsOpen(false)}
+              >
+                Dashboards
+              </Link>
+            </li>
 
             {/* Protected Links */}
             {authenticated ? (

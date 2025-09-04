@@ -84,6 +84,9 @@ export default function Home() {
         <Link href="/Depo-bill" className={styles.link}>
           Depo Bill
         </Link>
+        <Link href="/Visualize" className={styles.link}>
+          Dashboards
+        </Link>
 
         {authenticated ? (
           <>
