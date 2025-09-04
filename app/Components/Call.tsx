@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import styles from "../styles/Call.module.css";
+import * as XLSX from "xlsx";
 
 interface CallRecord {
   id: string;
@@ -44,6 +45,82 @@ export default function Call() {
       window.removeEventListener("callRecordsUpdated", handleStorageChange);
     };
   }, [setSavedRecords]);
+
+  // Updated export function with styling
+  const exportToExcel = () => {
+    // Convert data to worksheet
+    const data = savedRecords.map((record) => ({
+      Date: record.date,
+      "Caller Type": record.callerType,
+      "Office Name": record.officeName,
+      "Person Name": record.personName,
+      "Case Name/Number": record.caseName,
+      "Reason for Call": record.reason,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+
+    // Get the range of the data
+    const range = XLSX.utils.decode_range(worksheet["!ref"] || "A1");
+
+    // Add styling to headers (first row)
+    for (let C = range.s.c; C <= range.e.c; ++C) {
+      const cell_address = { c: C, r: 0 };
+      const cell_ref = XLSX.utils.encode_cell(cell_address);
+
+      if (!worksheet[cell_ref]) continue;
+
+      // Add style to header cells
+      worksheet[cell_ref].s = {
+        font: { bold: true },
+        fill: { fgColor: { rgb: "DDEBF7" } }, // Light blue background
+        border: {
+          top: { style: "thin", color: { rgb: "000000" } },
+          bottom: { style: "thin", color: { rgb: "000000" } },
+          left: { style: "thin", color: { rgb: "000000" } },
+          right: { style: "thin", color: { rgb: "000000" } },
+        },
+      };
+    }
+
+    // Add borders to all data cells
+    for (let R = range.s.r; R <= range.e.r; ++R) {
+      for (let C = range.s.c; C <= range.e.c; ++C) {
+        const cell_address = { c: C, r: R };
+        const cell_ref = XLSX.utils.encode_cell(cell_address);
+
+        if (!worksheet[cell_ref]) continue;
+
+        // Ensure cell has a style object
+        if (!worksheet[cell_ref].s) {
+          worksheet[cell_ref].s = {};
+        }
+
+        // Add borders to all cells
+        worksheet[cell_ref].s.border = {
+          top: { style: "thin", color: { rgb: "000000" } },
+          bottom: { style: "thin", color: { rgb: "000000" } },
+          left: { style: "thin", color: { rgb: "000000" } },
+          right: { style: "thin", color: { rgb: "000000" } },
+        };
+      }
+    }
+
+    // Set column widths for better readability
+    const colWidths = [
+      { wch: 12 }, // Date
+      { wch: 7 }, // Caller Type
+      { wch: 25 }, // Office Name
+      { wch: 20 }, // Person Name
+      { wch: 30 }, // Case Name/Number
+      { wch: 40 }, // Reason for Call
+    ];
+    worksheet["!cols"] = colWidths;
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Call Records");
+    XLSX.writeFile(workbook, "Call_Records.xlsx");
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -301,45 +378,55 @@ export default function Call() {
         </div>
 
         {savedRecords.length > 0 ? (
-          <div className={styles.recordsTableContainer}>
-            <table className={styles.recordsTable}>
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Caller</th>
-                  <th>Office</th>
-                  <th>Person</th>
-                  <th>Case</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {savedRecords.map((record) => (
-                  <tr key={record.id}>
-                    <td>{record.date}</td>
-                    <td>{record.callerType}</td>
-                    <td>{record.officeName}</td>
-                    <td>{record.personName}</td>
-                    <td>{record.caseName}</td>
-                    <td className={styles.actionsCell}>
-                      <button
-                        onClick={() => handleEdit(record)}
-                        className={`${styles.button} ${styles.buttonEdit}`}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(record.id)}
-                        className={`${styles.button} ${styles.buttonDelete}`}
-                      >
-                        Delete
-                      </button>
-                    </td>
+          <>
+            {/* Add Export Button */}
+            <button
+              onClick={exportToExcel}
+              className={`${styles.button} ${styles.buttonExport}`}
+            >
+              Export to Excel
+            </button>
+
+            <div className={styles.recordsTableContainer}>
+              <table className={styles.recordsTable}>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Caller</th>
+                    <th>Office</th>
+                    <th>Person</th>
+                    <th>Case</th>
+                    <th>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {savedRecords.map((record) => (
+                    <tr key={record.id}>
+                      <td>{record.date}</td>
+                      <td>{record.callerType}</td>
+                      <td>{record.officeName}</td>
+                      <td>{record.personName}</td>
+                      <td>{record.caseName}</td>
+                      <td className={styles.actionsCell}>
+                        <button
+                          onClick={() => handleEdit(record)}
+                          className={`${styles.button} ${styles.buttonEdit}`}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(record.id)}
+                          className={`${styles.button} ${styles.buttonDelete}`}
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         ) : (
           <p className={styles.noRecords}>No call records saved yet</p>
         )}

@@ -114,7 +114,7 @@ export default function Home() {
     return "New Chat";
   };
 
-  // app/page.tsx (updated fetch call)
+  // In your page component, update the handleSubmit function
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
@@ -155,7 +155,6 @@ export default function Home() {
     setInput("");
 
     try {
-      // Use your API route instead of direct OpenRouter call
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
@@ -166,12 +165,26 @@ export default function Home() {
         }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `API error: ${response.status}`);
+      // First check if the response is JSON
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text();
+        console.error("Non-JSON response:", text.substring(0, 100));
+        throw new Error(
+          `Server returned unexpected format: ${response.status}`
+        );
       }
 
       const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || `API error: ${response.status}`);
+      }
+
+      if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+        throw new Error("Invalid response format from API");
+      }
+
       const assistantMessage: Message = {
         role: "assistant",
         content: data.choices[0].message.content,
