@@ -16,6 +16,7 @@ type ExcelRow = {
   "Case Name": string;
   "Case #": string;
   "Case Status": string;
+  "WCAB Board": string;
   Address?: string;
   City: string;
   County: string;
@@ -50,6 +51,7 @@ export default function Zip() {
   const [caseName, setCaseName] = useState<string>("");
   const [caseNumber, setCaseNumber] = useState<string>("");
   const [caseStatus, setCaseStatus] = useState<string>("");
+  const [wcabBoard, setWcabBoard] = useState<string>("");
   const [results, setResults] = useState<CityData[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [showOthers, setShowOthers] = useState<boolean>(false);
@@ -61,6 +63,7 @@ export default function Zip() {
   const [tempCaseName, setTempCaseName] = useState<string>("");
   const [tempCaseNumber, setTempCaseNumber] = useState<string>("");
   const [tempCaseStatus, setTempCaseStatus] = useState<string>("");
+  const [tempWcabBoard, setTempWcabBoard] = useState<string>("");
   const [excelData, setExcelData] = useState<ExcelRow[]>([]);
   const [showExcelPanel, setShowExcelPanel] = useState<boolean>(false);
   const [fileName, setFileName] = useState<string>("California_Zip_Data.xlsx");
@@ -273,6 +276,7 @@ export default function Zip() {
       setTempCaseName(caseName);
       setTempCaseNumber(caseNumber);
       setTempCaseStatus(caseStatus);
+      setTempWcabBoard(wcabBoard);
     }
     setShowNamePrompt(true);
   };
@@ -285,6 +289,7 @@ export default function Zip() {
         "Case Name": searchMode === "zip" ? tempCaseName : "",
         "Case #": tempCaseNumber,
         "Case Status": tempCaseStatus,
+        "WCAB Board": tempWcabBoard,
         City: currentCityToAdd.city,
         County: currentCityToAdd.county,
         Region: currentCityToAdd.region,
@@ -316,6 +321,8 @@ export default function Zip() {
       setTempName(name);
       setTempCaseName(caseName);
       setTempCaseNumber(caseNumber);
+      setTempCaseStatus(caseStatus);
+      setTempWcabBoard(wcabBoard);
     }
     setShowNamePrompt(true);
   };
@@ -328,6 +335,7 @@ export default function Zip() {
         "Case Name": searchMode === "zip" ? tempCaseName : "",
         "Case #": tempCaseNumber,
         "Case Status": tempCaseStatus,
+        "WCAB Board": tempWcabBoard,
         City: city.city,
         County: city.county,
         Region: city.region,
@@ -368,6 +376,7 @@ export default function Zip() {
       "Case Name": row["Case Name"],
       "Case #": row["Case #"],
       "Case Status": row["Case Status"],
+      "WCAB Board": row["WCAB Board"],
       City: row["City"],
       County: row["County"],
       Region: row["Region"],
@@ -417,6 +426,10 @@ export default function Zip() {
 
   const handleCaseNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCaseNumber(e.target.value);
+  };
+
+  const handleWcabBoardChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setWcabBoard(e.target.value);
   };
 
   const prioritizedResults = results.map((city) => ({
@@ -487,6 +500,15 @@ export default function Zip() {
                 type="text"
                 value={tempCaseStatus}
                 onChange={(e) => setTempCaseStatus(e.target.value)}
+                className={styles.input}
+              />
+            </div>
+            <div className={styles.inputGroup}>
+              <label className={styles.label}>WCAB Board:</label>
+              <input
+                type="text"
+                value={tempWcabBoard}
+                onChange={(e) => setTempWcabBoard(e.target.value)}
                 className={styles.input}
               />
             </div>
@@ -610,6 +632,17 @@ export default function Zip() {
                             className={styles.input}
                           />
                         </div>
+
+                        <div className={styles.inputGroup}>
+                          <label className={styles.label}>WCAB Board:</label>
+                          <input
+                            type="text"
+                            value={wcabBoard}
+                            onChange={handleWcabBoardChange}
+                            placeholder="Enter WCAB Board"
+                            className={styles.input}
+                          />
+                        </div>
                       </div>
                     </div>
 
@@ -627,6 +660,7 @@ export default function Zip() {
                           setCaseName("");
                           setCaseNumber("");
                           setCaseStatus("");
+                          setWcabBoard("");
                           setResults([]);
                           setError(null);
                           setUsZipResults(null);
@@ -716,6 +750,12 @@ export default function Zip() {
                       <div className={styles.smallText}>
                         <span>Case #: </span>
                         <span className={styles.mediumText}>{caseNumber}</span>
+                      </div>
+                    )}
+                    {searchMode === "zip" && wcabBoard && (
+                      <div className={styles.smallText}>
+                        <span>WCAB Board: </span>
+                        <span className={styles.mediumText}>{wcabBoard}</span>
                       </div>
                     )}
                     {searchMode === "address" && (
@@ -948,6 +988,11 @@ export default function Zip() {
                       {searchMode === "zip" && row["Case #"] && (
                         <span className={styles.mediumText}>
                           {row["Case #"]}
+                        </span>
+                      )}
+                      {searchMode === "zip" && row["WCAB Board"] && (
+                        <span className={styles.mediumText}>
+                          {row["WCAB Board"]}
                         </span>
                       )}
                       <button
