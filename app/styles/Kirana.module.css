@@ -1,0 +1,423 @@
+/* app/Kirana.module.css */
+
+.container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #fef3e7 0%, #fff6e9 100%);
+  padding: 1rem;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #ff8c3f 0%, #e67e22 100%);
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(230, 126, 34, 0.2);
+}
+
+.title {
+  font-size: 2.5rem;
+  color: white;
+  margin-bottom: 0.5rem;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.subtitle {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.2rem;
+}
+
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.button {
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.buttonEdit {
+  composes: button;
+  background-color: #e67e22;
+  color: white;
+}
+
+.buttonEdit:hover {
+  background-color: #d35400;
+  transform: translateY(-2px);
+}
+
+.buttonWhatsapp {
+  composes: button;
+  background-color: #25d366;
+  color: white;
+}
+
+.buttonWhatsapp:hover {
+  background-color: #128c7e;
+  transform: translateY(-2px);
+}
+
+.buttonClear {
+  composes: button;
+  background-color: #7f8c8d;
+  color: white;
+}
+
+.buttonClear:hover {
+  background-color: #636e72;
+  transform: translateY(-2px);
+}
+
+.buttonSaved {
+  composes: button;
+  background-color: #3498db;
+  color: white;
+}
+
+.buttonSaved:hover {
+  background-color: #2980b9;
+  transform: translateY(-2px);
+}
+
+.saveListForm {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.listNameInput {
+  padding: 0.8rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  min-width: 200px;
+}
+
+.listNameInput:focus {
+  outline: none;
+  border-color: #e67e22;
+  box-shadow: 0 0 0 2px rgba(230, 126, 34, 0.2);
+}
+
+.saveListButton {
+  composes: button;
+  background-color: #9b59b6;
+  color: white;
+}
+
+.saveListButton:hover {
+  background-color: #8e44ad;
+  transform: translateY(-2px);
+}
+
+.category {
+  margin-bottom: 2.5rem;
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+.categoryTitle {
+  font-size: 1.8rem;
+  color: #e67e22;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #ffeaa7;
+  text-align: center;
+}
+
+.itemsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.itemCard {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background-color: #fffaf0;
+  border-radius: 8px;
+  border-left: 4px solid #e67e22;
+  transition: all 0.3s ease;
+}
+
+.itemCard:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.itemName {
+  font-size: 1.1rem;
+  color: #2d3436;
+  flex: 1;
+}
+
+.inputGroup {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.quantityInput {
+  width: 70px;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 1rem;
+}
+
+.quantityInput:focus {
+  outline: none;
+  border-color: #e67e22;
+  box-shadow: 0 0 0 2px rgba(230, 126, 34, 0.2);
+}
+
+.unitSelect {
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: white;
+  font-size: 1rem;
+}
+
+.unitSelect:focus {
+  outline: none;
+  border-color: #e67e22;
+  box-shadow: 0 0 0 2px rgba(230, 126, 34, 0.2);
+}
+
+.savedListsContainer {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+  margin-bottom: 2rem;
+}
+
+.savedListsTitle {
+  font-size: 1.8rem;
+  color: #3498db;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.noLists {
+  text-align: center;
+  color: #7f8c8d;
+  font-size: 1.2rem;
+}
+
+.savedLists {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.savedListCard {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #3498db;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.savedListCard:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  background-color: #e3f2fd;
+}
+
+.savedListInfo h3 {
+  margin: 0 0 0.5rem 0;
+  color: #2c3e50;
+}
+
+.savedListInfo p {
+  margin: 0;
+  color: #7f8c8d;
+  font-size: 0.9rem;
+}
+
+.deleteButton {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: all 0.3s ease;
+}
+
+.deleteButton:hover {
+  background: #c0392b;
+  transform: scale(1.1);
+}
+
+.footer {
+  text-align: center;
+  margin-top: 2rem;
+  padding: 1.5rem;
+  color: #7f8c8d;
+  font-size: 0.9rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .container {
+    padding: 0.5rem;
+  }
+
+  .title {
+    font-size: 2rem;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+  }
+
+  .itemsGrid,
+  .savedLists {
+    grid-template-columns: 1fr;
+  }
+
+  .itemCard,
+  .savedListCard {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.8rem;
+  }
+
+  .inputGroup {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .controls {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .button {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .saveListForm {
+    flex-direction: column;
+  }
+
+  .listNameInput {
+    width: 100%;
+    max-width: 300px;
+  }
+}
+
+@media (max-width: 480px) {
+  .title {
+    font-size: 1.8rem;
+  }
+
+  .categoryTitle,
+  .savedListsTitle {
+    font-size: 1.5rem;
+  }
+
+  .header {
+    padding: 1rem;
+  }
+
+  .inputGroup {
+    flex-direction: column;
+  }
+
+  .quantityInput,
+  .unitSelect {
+    width: 100%;
+  }
+}
+
+/* Animation for items */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.itemCard,
+.savedListCard {
+  animation: fadeIn 0.5s ease forwards;
+}
+
+/* Print styles */
+@media print {
+  .container {
+    background: white;
+    padding: 0;
+  }
+
+  .header {
+    background: white;
+    color: black;
+    box-shadow: none;
+  }
+
+  .title {
+    color: black;
+    text-shadow: none;
+  }
+
+  .subtitle {
+    color: black;
+  }
+
+  .controls,
+  .saveListForm,
+  .savedListsContainer,
+  .footer {
+    display: none;
+  }
+
+  .category {
+    box-shadow: none;
+    page-break-inside: avoid;
+  }
+
+  .itemCard {
+    box-shadow: none;
+    border-left: 2px solid #ccc;
+  }
+}
