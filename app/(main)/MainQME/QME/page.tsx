@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -98,29 +99,118 @@ Please let me know if you require anything further from my end.
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // if (!caseNumber) {
-    //   alert("Please enter a case number");
-    //   return;
-    // }
+    // Validate required fields
+    if (!caseNumber.trim()) {
+      alert("Please enter a case number");
+      return;
+    }
 
-    const newRecord: ExtendedQmeRecord = {
-      id: generateId(),
-      date: new Date().toISOString().split("T")[0],
-      caseNumber,
-      applicantName,
-      doctorName,
-      phoneNumber,
-      interpreterRequired,
-      contactPerson,
-      contactEmail,
-      scheduled: "No" as ScheduledStatus,
-      address: "",
-      appointmentDate: "",
-      appointmentTime: "",
-      hoursBeforeArrival: "1",
-    };
+    // Check if record with same case number exists
+    const existingRecordIndex = savedRecords.findIndex(
+      (record) =>
+        record.caseNumber.toLowerCase() === caseNumber.toLowerCase().trim()
+    );
 
-    setSavedRecords([...savedRecords, newRecord]);
+    if (existingRecordIndex !== -1) {
+      // Merge with existing record - smart field updating
+      const existingRecord = savedRecords[existingRecordIndex];
+
+      // Helper function to determine which value to keep
+      const mergeField = (existingValue: any, newValue: any) => {
+        // If existing value is empty/null/undefined, use new value
+        if (!existingValue || existingValue.toString().trim() === "") {
+          return newValue && newValue.toString().trim() !== ""
+            ? newValue.toString().trim()
+            : existingValue;
+        }
+        // If new value is empty, keep existing value
+        if (!newValue || newValue.toString().trim() === "") {
+          return existingValue;
+        }
+        // If both have values, prefer existing value but show a message for significant changes
+        return existingValue;
+      };
+
+      const updatedRecord: ExtendedQmeRecord = {
+        ...existingRecord,
+        // Merge fields intelligently
+        applicantName: mergeField(existingRecord.applicantName, applicantName),
+        doctorName: mergeField(existingRecord.doctorName, doctorName),
+        phoneNumber: mergeField(existingRecord.phoneNumber, phoneNumber),
+        contactPerson: mergeField(existingRecord.contactPerson, contactPerson),
+        contactEmail: mergeField(existingRecord.contactEmail, contactEmail),
+        // For boolean fields, if existing is false and new is true, update to true
+        interpreterRequired:
+          existingRecord.interpreterRequired || interpreterRequired,
+        // Update the date to show when this record was last modified
+        date: new Date().toISOString().split("T")[0],
+      };
+
+      // Check if any significant fields were updated
+      const significantChanges = [];
+      if (
+        applicantName.trim() &&
+        existingRecord.applicantName !== applicantName.trim() &&
+        existingRecord.applicantName
+      ) {
+        significantChanges.push(
+          `Applicant Name (kept: "${existingRecord.applicantName}")`
+        );
+      }
+      if (
+        doctorName.trim() &&
+        existingRecord.doctorName !== doctorName.trim() &&
+        existingRecord.doctorName
+      ) {
+        significantChanges.push(
+          `Doctor Name (kept: "${existingRecord.doctorName}")`
+        );
+      }
+
+      const updatedRecords = [...savedRecords];
+      updatedRecords[existingRecordIndex] = updatedRecord;
+      setSavedRecords(updatedRecords);
+
+      if (significantChanges.length > 0) {
+        alert(
+          `Record merged successfully! Case number ${caseNumber} updated.\n\nNote: The following fields were not changed to preserve existing data:\n${significantChanges.join(
+            "\n"
+          )}`
+        );
+      } else {
+        alert(
+          `Record merged successfully! Case number ${caseNumber} updated with new information.`
+        );
+      }
+    } else {
+      // Create new record if case number doesn't exist
+      const newRecord: ExtendedQmeRecord = {
+        id: generateId(),
+        date: new Date().toISOString().split("T")[0],
+        caseNumber: caseNumber.trim(),
+        applicantName: applicantName.trim(),
+        doctorName: doctorName.trim(),
+        phoneNumber: phoneNumber.trim(),
+        interpreterRequired,
+        contactPerson: contactPerson.trim(),
+        contactEmail: contactEmail.trim(),
+        scheduled: "No" as ScheduledStatus,
+        address: "",
+        appointmentDate: "",
+        appointmentTime: "",
+        hoursBeforeArrival: "1",
+        // Panel Pull fields
+        specialty: "",
+        doctor1: "",
+        doctor2: "",
+        doctor3: "",
+        panelPullDate: "",
+      };
+
+      setSavedRecords([...savedRecords, newRecord]);
+      alert("New record created successfully!");
+    }
+
     resetForm();
   };
 
