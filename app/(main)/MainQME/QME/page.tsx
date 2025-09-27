@@ -30,6 +30,24 @@ export default function EmailTemplate() {
 
   const generateId = () => Math.random().toString(36).substring(2, 9);
 
+  // In your QME Call page component, add this useEffect
+  useEffect(() => {
+    const prefillData = localStorage.getItem("qmeCallPrefillData");
+    if (prefillData) {
+      const data = JSON.parse(prefillData);
+      setCaseNumber(data.caseNumber || "");
+      setApplicantName(data.applicantName || "");
+      setDoctorName(data.doctorName || "");
+      setPhoneNumber(data.phoneNumber || "");
+      setContactPerson(data.contactPerson || "");
+      setContactEmail(data.contactEmail || "");
+      setInterpreterRequired(data.interpreterRequired !== false);
+
+      // Clear the stored data after using it
+      localStorage.removeItem("qmeCallPrefillData");
+    }
+  }, []);
+
   useEffect(() => {
     const handleStorageChange = () => {
       const records = JSON.parse(localStorage.getItem("qmeRecords") || "[]");
@@ -80,10 +98,10 @@ Please let me know if you require anything further from my end.
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!caseNumber) {
-      alert("Please enter a case number");
-      return;
-    }
+    // if (!caseNumber) {
+    //   alert("Please enter a case number");
+    //   return;
+    // }
 
     const newRecord: ExtendedQmeRecord = {
       id: generateId(),
@@ -180,7 +198,7 @@ Please let me know if you require anything further from my end.
             value={caseNumber}
             onChange={(e) => setCaseNumber(e.target.value)}
             className={styles.input}
-            required
+            // required
             readOnly={!!viewingRecord}
           />
         </div>

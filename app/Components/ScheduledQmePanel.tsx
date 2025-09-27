@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // components/ViewQmeData.tsx
 "use client";
@@ -19,6 +20,12 @@ interface ExtendedQmeRecord extends QmeRecord {
   appointmentDate: string;
   appointmentTime: string;
   hoursBeforeArrival: string;
+  // New fields from Panel Pull
+  specialty: string;
+  doctor1: string;
+  doctor2: string;
+  doctor3: string;
+  panelPullDate: string;
 }
 
 const STORAGE_KEY = "qmeRecords";
@@ -73,6 +80,12 @@ export default function ViewQmeData({
           appointmentDate: "",
           appointmentTime: "",
           hoursBeforeArrival: "1",
+          // Panel Pull fields with defaults
+          specialty: record.specialty || "",
+          doctor1: record.doctor1 || "",
+          doctor2: record.doctor2 || "",
+          doctor3: record.doctor3 || "",
+          panelPullDate: record.panelPullDate || "",
         };
       } else {
         // Already in new format, just ensure all fields exist
@@ -85,6 +98,12 @@ export default function ViewQmeData({
           appointmentDate: record.appointmentDate || "",
           appointmentTime: record.appointmentTime || "",
           hoursBeforeArrival: record.hoursBeforeArrival || "1",
+          // Panel Pull fields with defaults
+          specialty: record.specialty || "",
+          doctor1: record.doctor1 || "",
+          doctor2: record.doctor2 || "",
+          doctor3: record.doctor3 || "",
+          panelPullDate: record.panelPullDate || "",
         };
       }
     });
@@ -116,6 +135,12 @@ export default function ViewQmeData({
       appointmentDate: "",
       appointmentTime: "",
       hoursBeforeArrival: "1",
+      // Panel Pull fields with defaults
+      specialty: "",
+      doctor1: "",
+      doctor2: "",
+      doctor3: "",
+      panelPullDate: "",
     }));
     setRecords(initializedRecords);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(initializedRecords));
@@ -191,6 +216,22 @@ export default function ViewQmeData({
       hoursBeforeArrival: Array.from(
         new Set(records.map((r) => r.hoursBeforeArrival || "").filter(Boolean))
       ),
+      // New Panel Pull fields
+      specialty: Array.from(
+        new Set(records.map((r) => r.specialty || "").filter(Boolean))
+      ),
+      doctor1: Array.from(
+        new Set(records.map((r) => r.doctor1 || "").filter(Boolean))
+      ),
+      doctor2: Array.from(
+        new Set(records.map((r) => r.doctor2 || "").filter(Boolean))
+      ),
+      doctor3: Array.from(
+        new Set(records.map((r) => r.doctor3 || "").filter(Boolean))
+      ),
+      panelPullDate: Array.from(
+        new Set(records.map((r) => r.panelPullDate || "").filter(Boolean))
+      ),
     };
     return suggestions;
   }, [records]);
@@ -233,6 +274,12 @@ export default function ViewQmeData({
       appointmentDate: record.appointmentDate,
       appointmentTime: record.appointmentTime,
       hoursBeforeArrival: record.hoursBeforeArrival,
+      // New Panel Pull fields
+      specialty: record.specialty,
+      doctor1: record.doctor1,
+      doctor2: record.doctor2,
+      doctor3: record.doctor3,
+      panelPullDate: record.panelPullDate,
     });
     setShowSidePanel(true);
   };
@@ -258,7 +305,6 @@ export default function ViewQmeData({
   };
 
   // Delete record
-  // In ViewQmeData's handleDelete:
   const handleDelete = () => {
     if (!selectedRecord) return;
 
@@ -267,7 +313,7 @@ export default function ViewQmeData({
         (record) => record.id !== selectedRecord.id
       );
       setRecords(updatedRecords);
-      localStorage.setItem("qmeRecords", JSON.stringify(updatedRecords)); // Explicit save
+      localStorage.setItem("qmeRecords", JSON.stringify(updatedRecords));
       setShowSidePanel(false);
       setShowDeleteConfirm(false);
 
@@ -276,17 +322,159 @@ export default function ViewQmeData({
     }
   };
 
-  // In EmailTemplate:
-  useEffect(() => {
-    const handleQmeUpdate = () => {
-      const records = JSON.parse(localStorage.getItem("qmeRecords") || "[]");
-      setRecords(records);
-    };
+  // Separate functions for each note template
+  const generateNoteTemplate1 = () => {
+    if (!selectedRecord) return "";
 
-    window.addEventListener("qmeRecordsUpdated", handleQmeUpdate);
-    return () =>
-      window.removeEventListener("qmeRecordsUpdated", handleQmeUpdate);
-  }, [setRecords]);
+    const recordToUse = { ...selectedRecord, ...editData };
+    return `(${recordToUse.specialty}) QME APPT :- Dr. ${
+      recordToUse.doctorName
+    } | Early arrival ${recordToUse.hoursBeforeArrival} ${
+      parseFloat(recordToUse.hoursBeforeArrival) !== 1 ? "hours" : "hour"
+    } before QME`;
+  };
+
+  const generateNoteTemplate2 = () => {
+    if (!selectedRecord) return "";
+
+    const recordToUse = { ...selectedRecord, ...editData };
+    const arrivalTime = calculateArrivalTime(
+      recordToUse.appointmentTime,
+      recordToUse.hoursBeforeArrival
+    );
+
+    return `QME Details:
+- Applicant: ${recordToUse.applicantName}
+- Doctor: Dr. ${recordToUse.doctorName}
+- Specialty: ${recordToUse.specialty}
+- Appointment: ${recordToUse.appointmentDate} at ${formatTime(
+      recordToUse.appointmentTime
+    )}
+- Arrival Time: ${formatTime(arrivalTime)}
+- Address: ${recordToUse.address}
+- Case Number: ${recordToUse.caseNumber || "N/A"}
+- Phone Number: ${recordToUse.phoneNumber || "N/A"}
+- Email : ${recordToUse.contactEmail || "N/A"}
+- Interpreter Requested : ${recordToUse.interpreterRequired || "N/A"}`;
+  };
+
+  // Copy functions for separate templates
+  const copyNote1ToClipboard = () => {
+    const note = generateNoteTemplate1();
+    if (!note) {
+      alert("No record selected!");
+      return;
+    }
+    navigator.clipboard.writeText(note);
+    alert("Note template 1 copied to clipboard!");
+  };
+
+  const copyNote2ToClipboard = () => {
+    const note = generateNoteTemplate2();
+    if (!note) {
+      alert("No record selected!");
+      return;
+    }
+    navigator.clipboard.writeText(note);
+    alert("Note template 2 copied to clipboard!");
+  };
+
+  // Update task template function
+  const generateTaskTemplate = (type: "advocacy" | "medical") => {
+    if (!selectedRecord) return "";
+
+    const recordToUse = { ...selectedRecord, ...editData };
+    const baseTemplate = `Hello,
+
+QME Appt is scheduled for ${recordToUse.applicantName} on ${
+      recordToUse.appointmentDate
+    } at ${formatTime(recordToUse.appointmentTime)}.`;
+
+    if (type === "advocacy") {
+      return `${baseTemplate}
+Please go ahead and prepare the Advocacy Letter for this one.`;
+    } else if (type === "medical") {
+      return `${baseTemplate}
+Please go ahead and prepare the Medical Index for this one.`;
+    }
+
+    return "";
+  };
+
+  // Update copy functions to check for empty strings
+  const copyAdvocacyTaskToClipboard = () => {
+    const task = generateTaskTemplate("advocacy");
+    if (!task) {
+      alert("No record selected!");
+      return;
+    }
+    navigator.clipboard.writeText(task);
+    alert("Advocacy task template copied to clipboard!");
+  };
+
+  const copyMedicalTaskToClipboard = () => {
+    const task = generateTaskTemplate("medical");
+    if (!task) {
+      alert("No record selected!");
+      return;
+    }
+    navigator.clipboard.writeText(task);
+    alert("Medical task template copied to clipboard!");
+  };
+
+  // Usage examples:
+  // const advocacyTask = generateTaskTemplate("advocacy");
+  // const medicalTask = generateTaskTemplate("medical");
+
+  const generateInterpreterEmailTemplate = () => {
+    if (!selectedRecord) return "";
+
+    const recordToUse = { ...selectedRecord, ...editData };
+    const arrivalTime = calculateArrivalTime(
+      recordToUse.appointmentTime,
+      recordToUse.hoursBeforeArrival
+    );
+
+    return `Subject: Spanish Interpreter Request for QME - ${
+      recordToUse.applicantName
+    } - Dr. ${recordToUse.doctorName}
+
+Hello,
+
+I hope this email finds you well.
+
+We are writing to request a Spanish interpreter for the upcoming QME appointment with the following details:
+
+Patient: ${recordToUse.applicantName}
+Doctor: Dr. ${recordToUse.doctorName}
+Appointment Date: ${recordToUse.appointmentDate}
+Appointment Time: ${formatTime(recordToUse.appointmentTime)}
+Address: ${recordToUse.address}
+
+Please arrange for a certified Spanish interpreter to be present at this appointment. We request that you provide us with the following details once the interpreter is confirmed:
+
+1. Interpreter's full name and certification number
+2. Contact information for the interpreter
+3. Confirmation of availability for the scheduled date and time
+4. Any specific requirements or instructions for the interpreter
+
+We would appreciate it if you could confirm the interpreter assignment and provide the above details at your earliest convenience.
+
+Thank you for your assistance in this matter.
+
+`;
+  };
+
+  // Copy function for interpreter email
+  const copyInterpreterEmailToClipboard = () => {
+    const email = generateInterpreterEmailTemplate();
+    if (!email) {
+      alert("No record selected!");
+      return;
+    }
+    navigator.clipboard.writeText(email);
+    alert("Interpreter email template copied to clipboard!");
+  };
 
   // Generate email template
   const generateEmailTemplate = () => {
@@ -373,6 +561,12 @@ If you have any questions or need further adjustments, Please let me know.`;
             ? convertTo24Hour(item["Appointment Time"].split(" ")[0])
             : "",
           hoursBeforeArrival: item["Hours Before Arrival"] || "1",
+          // New Panel Pull fields
+          specialty: item["Specialty"] || "",
+          doctor1: item["Doctor 1"] || "",
+          doctor2: item["Doctor 2"] || "",
+          doctor3: item["Doctor 3"] || "",
+          panelPullDate: item["Panel Pull Date"] || "",
         };
       });
 
@@ -444,6 +638,12 @@ If you have any questions or need further adjustments, Please let me know.`;
         "Appointment Time": formatTime(record.appointmentTime),
         "Arrival Time": formatTime(arrivalTime),
         "Hours Before Arrival": record.hoursBeforeArrival,
+        // New Panel Pull fields
+        Specialty: record.specialty,
+        "Doctor 1": record.doctor1,
+        "Doctor 2": record.doctor2,
+        "Doctor 3": record.doctor3,
+        "Panel Pull Date": record.panelPullDate,
       };
     });
 
@@ -453,8 +653,8 @@ If you have any questions or need further adjustments, Please let me know.`;
 
     // Format Excel headers
     const headerStyle = {
-      fill: { fgColor: { rgb: "4472C4" } }, // Blue background
-      font: { bold: true, color: { rgb: "FFFFFF" } }, // White bold text
+      fill: { fgColor: { rgb: "4472C4" } },
+      font: { bold: true, color: { rgb: "FFFFFF" } },
     };
 
     // Apply header style
@@ -521,7 +721,7 @@ If you have any questions or need further adjustments, Please let me know.`;
                     }}
                     className={styles.suggestionItems}
                   >
-                    {/* {suggestion} */}
+                    {suggestion}
                   </li>
                 ))}
               </ul>
@@ -557,6 +757,12 @@ If you have any questions or need further adjustments, Please let me know.`;
               <option value="address">Address</option>
               <option value="appointmentDate">Appointment Date</option>
               <option value="appointmentTime">Appointment Time</option>
+              {/* New Panel Pull fields */}
+              <option value="specialty">Specialty</option>
+              <option value="doctor1">Doctor 1</option>
+              <option value="doctor2">Doctor 2</option>
+              <option value="doctor3">Doctor 3</option>
+              <option value="panelPullDate">Panel Pull Date</option>
             </select>
           </div>
         </div>
@@ -601,6 +807,12 @@ If you have any questions or need further adjustments, Please let me know.`;
                 <th>Appt Date</th>
                 <th>Appt Time</th>
                 <th>Arrival Time</th>
+                {/* New Panel Pull fields */}
+                <th>Specialty</th>
+                <th>Doctor 1</th>
+                <th>Doctor 2</th>
+                <th>Doctor 3</th>
+                <th>Panel Pull Date</th>
               </tr>
             </thead>
             <tbody>
@@ -631,6 +843,12 @@ If you have any questions or need further adjustments, Please let me know.`;
                       {formatTime(arrivalTime)} ({record.hoursBeforeArrival} hr
                       {record.hoursBeforeArrival !== "1" ? "s" : ""})
                     </td>
+                    {/* New Panel Pull fields */}
+                    <td>{record.specialty}</td>
+                    <td>{record.doctor1}</td>
+                    <td>{record.doctor2}</td>
+                    <td>{record.doctor3}</td>
+                    <td>{record.panelPullDate}</td>
                   </tr>
                 );
               })}
@@ -813,6 +1031,54 @@ If you have any questions or need further adjustments, Please let me know.`;
               </small>
             </div>
 
+            {/* New Panel Pull fields in edit form */}
+            <div className={styles.formGroup}>
+              <label>Specialty:</label>
+              <input
+                type="text"
+                value={editData.specialty || ""}
+                onChange={(e) => handleEditChange("specialty", e.target.value)}
+              />
+            </div>
+
+            <div className={styles.formGroup}>
+              <label>Doctor 1:</label>
+              <input
+                type="text"
+                value={editData.doctor1 || ""}
+                onChange={(e) => handleEditChange("doctor1", e.target.value)}
+              />
+            </div>
+
+            <div className={styles.formGroup}>
+              <label>Doctor 2:</label>
+              <input
+                type="text"
+                value={editData.doctor2 || ""}
+                onChange={(e) => handleEditChange("doctor2", e.target.value)}
+              />
+            </div>
+
+            <div className={styles.formGroup}>
+              <label>Doctor 3:</label>
+              <input
+                type="text"
+                value={editData.doctor3 || ""}
+                onChange={(e) => handleEditChange("doctor3", e.target.value)}
+              />
+            </div>
+
+            <div className={styles.formGroup}>
+              <label>Panel Pull Date:</label>
+              <input
+                type="date"
+                value={editData.panelPullDate || ""}
+                onChange={(e) =>
+                  handleEditChange("panelPullDate", e.target.value)
+                }
+              />
+            </div>
+
             <div className={styles.buttonGroup}>
               <button onClick={handleSave} className={styles.saveButton}>
                 Save Changes
@@ -826,19 +1092,123 @@ If you have any questions or need further adjustments, Please let me know.`;
             </div>
           </div>
 
-          <div className={styles.emailTemplate}>
-            <h5>Email Template:</h5>
-            <textarea
-              readOnly
-              value={generateEmailTemplate()}
-              className={styles.emailTextarea}
-            />
-            <button
-              onClick={copyEmailToClipboard}
-              className={styles.copyButton}
-            >
-              Copy Email to Clipboard
-            </button>
+          <div className={styles.templatesContainer}>
+            {/* Email Templates Section */}
+            <div className={styles.templateSection}>
+              <h4>Email Templates</h4>
+
+              {/* Original Email Template */}
+              {/* <div className={styles.emailTemplate}>
+                <h5>QME Notice Email Template:</h5>
+                <textarea
+                  readOnly
+                  value={generateEmailTemplate()}
+                  className={styles.emailTextarea}
+                  rows={6}
+                />
+                <button
+                  onClick={copyEmailToClipboard}
+                  className={styles.copyButton}
+                >
+                  Copy Email to Clipboard
+                </button>
+              </div> */}
+
+              {/* Spanish Interpreter Email Template */}
+              <div className={styles.emailTemplate}>
+                <h5>Spanish Interpreter Request Email:</h5>
+                <textarea
+                  readOnly
+                  value={generateInterpreterEmailTemplate()}
+                  className={styles.emailTextarea}
+                  rows={8}
+                />
+                <button
+                  onClick={copyInterpreterEmailToClipboard}
+                  className={styles.copyButton}
+                >
+                  Copy Interpreter Email
+                </button>
+              </div>
+            </div>
+
+            {/* Note Templates Section */}
+            <div className={styles.templateSection}>
+              <h4>Note Templates</h4>
+
+              {/* Note Template 1 */}
+              <div className={styles.emailTemplate}>
+                <h5>Short Note Template:</h5>
+                <textarea
+                  readOnly
+                  value={generateNoteTemplate1()}
+                  className={styles.emailTextarea}
+                  rows={3}
+                />
+                <button
+                  onClick={copyNote1ToClipboard}
+                  className={styles.copyButton}
+                >
+                  Copy Short Note
+                </button>
+              </div>
+
+              {/* Note Template 2 */}
+              <div className={styles.emailTemplate}>
+                <h5>Detailed Note Template:</h5>
+                <textarea
+                  readOnly
+                  value={generateNoteTemplate2()}
+                  className={styles.emailTextarea}
+                  rows={10}
+                />
+                <button
+                  onClick={copyNote2ToClipboard}
+                  className={styles.copyButton}
+                >
+                  Copy Detailed Note
+                </button>
+              </div>
+            </div>
+
+            {/* Task Templates Section */}
+            <div className={styles.templateSection}>
+              <h4>Task Templates</h4>
+
+              {/* Advocacy Letter Task */}
+              <div className={styles.emailTemplate}>
+                <h5>Advocacy Letter Task:</h5>
+                <textarea
+                  readOnly
+                  value={generateTaskTemplate("advocacy")}
+                  className={styles.emailTextarea}
+                  rows={5}
+                />
+                <button
+                  onClick={copyAdvocacyTaskToClipboard}
+                  className={styles.copyButton}
+                >
+                  Copy Advocacy Task
+                </button>
+              </div>
+
+              {/* Medical Index Task */}
+              <div className={styles.emailTemplate}>
+                <h5>Medical Index Task:</h5>
+                <textarea
+                  readOnly
+                  value={generateTaskTemplate("medical")}
+                  className={styles.emailTextarea}
+                  rows={5}
+                />
+                <button
+                  onClick={copyMedicalTaskToClipboard}
+                  className={styles.copyButton}
+                >
+                  Copy Medical Task
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -859,7 +1229,6 @@ If you have any questions or need further adjustments, Please let me know.`;
               >
                 Cancel
               </button>
-              {/* In your delete confirmation modal */}
               <button
                 onClick={handleDelete}
                 className={styles.confirmDeleteButton}

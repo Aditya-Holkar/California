@@ -1,0 +1,1097 @@
+/* PanelStrike.module.css */
+.panelStrikeContainer {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: #f8f9fa;
+  min-height: 100vh;
+}
+
+.panelStrikeContainer h3 {
+  color: #2c3e50;
+  margin-bottom: 25px;
+  border-bottom: 3px solid #e74c3c;
+  padding-bottom: 12px;
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+/* Controls Section */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.searchSection {
+  flex: 1;
+  min-width: 300px;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.3s ease;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.actionButtons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.importButton,
+.exportButton,
+.clearButton {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.importButton {
+  background: #3498db;
+  color: white;
+}
+
+.importButton:hover {
+  background: #2980b9;
+  transform: translateY(-1px);
+}
+
+.exportButton {
+  background: #27ae60;
+  color: white;
+}
+
+.exportButton:hover {
+  background: #219a52;
+  transform: translateY(-1px);
+}
+
+.clearButton {
+  background: #e74c3c;
+  color: white;
+}
+
+.clearButton:hover {
+  background: #c0392b;
+  transform: translateY(-1px);
+}
+
+/* Content Layout */
+.contentLayout {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 30px;
+  margin-bottom: 30px;
+}
+
+/* Cases Section */
+.casesSection {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+  max-height: 70vh;
+  overflow-y: auto;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.casesSection h4 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+  font-size: 1.3rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.casesSection h4::before {
+  content: "📋";
+  font-size: 1.2em;
+}
+
+.casesList {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.caseCard {
+  background: white;
+  padding: 18px;
+  border-radius: 8px;
+  border: 2px solid #e9ecef;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.caseCard:hover {
+  border-color: #3498db;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.15);
+}
+
+.caseCard.selectedCase {
+  border-color: #e74c3c;
+  background: linear-gradient(135deg, #fff5f5 0%, #ffeaea 100%);
+  transform: scale(1.02);
+}
+
+.caseHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.caseHeader strong {
+  color: #2c3e50;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.caseHeader span {
+  color: #7f8c8d;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.caseDetails {
+  font-size: 14px;
+  color: #555;
+  line-height: 1.5;
+}
+
+.caseDetails div {
+  margin-bottom: 6px;
+}
+
+.caseDetails ul {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.caseDetails li {
+  margin: 4px 0;
+  color: #666;
+}
+
+.strikeBadge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(231, 76, 60, 0.3);
+}
+
+.noCases {
+  text-align: center;
+  padding: 50px 20px;
+  color: #7f8c8d;
+  font-style: italic;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 2px dashed #dee2e6;
+}
+
+/* Strike Section */
+.strikeSection {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+  max-height: 70vh;
+  overflow-y: auto;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.caseInfo {
+  margin-bottom: 25px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #ecf0f1;
+}
+
+.caseInfo h4 {
+  color: #2c3e50;
+  margin-bottom: 12px;
+  font-size: 1.4rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.caseInfo h4::before {
+  content: "⚖️";
+  font-size: 1.2em;
+}
+
+.caseSummary p {
+  margin: 8px 0;
+  color: #555;
+  font-size: 15px;
+}
+
+.doctorsStatus {
+  margin-bottom: 25px;
+}
+
+.doctorsStatus h5 {
+  color: #2c3e50;
+  margin-bottom: 15px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.doctorsStatus h5::before {
+  content: "👨‍⚕️";
+}
+
+.doctorsList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.doctorItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #27ae60;
+  transition: all 0.3s ease;
+}
+
+.doctorItem:hover {
+  transform: translateX(5px);
+}
+
+.doctorItem.struck {
+  border-left-color: #e74c3c;
+  background: linear-gradient(135deg, #fff5f5 0%, #ffeaea 100%);
+  opacity: 0.8;
+}
+
+.doctorName {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 15px;
+}
+
+.strikeStatus {
+  font-size: 12px;
+  color: #e74c3c;
+  font-weight: bold;
+  background: rgba(231, 76, 60, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+}
+
+.strikeAction {
+  margin: 25px 0;
+  text-align: center;
+}
+
+.recordStrikeButton {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  color: white;
+  padding: 14px 28px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+}
+
+.recordStrikeButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(231, 76, 60, 0.4);
+}
+
+.strikeHistory {
+  margin-top: 30px;
+}
+
+.strikeHistory h5 {
+  color: #2c3e50;
+  margin-bottom: 18px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.strikeHistory h5::before {
+  content: "📊";
+}
+
+.strikeRecord {
+  background: #f8f9fa;
+  padding: 18px;
+  border-radius: 8px;
+  margin-bottom: 18px;
+  border-left: 4px solid #3498db;
+  transition: all 0.3s ease;
+}
+
+.strikeRecord:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.strikeHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.strikeNumber {
+  font-weight: bold;
+  color: #2c3e50;
+  background: rgba(52, 152, 219, 0.1);
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+.strikeType {
+  background: #3498db;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.strikeDate {
+  color: #7f8c8d;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.editButton {
+  background: #3498db;
+  color: white;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.editButton:hover {
+  background: #2980b9;
+}
+
+.strikeDetails p {
+  margin: 6px 0;
+  color: #555;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.followUpSection {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 2px dashed #ddd;
+}
+
+.followUpHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  font-size: 14px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.completed {
+  color: #27ae60;
+  font-weight: bold;
+  background: rgba(39, 174, 96, 0.1);
+  padding: 4px 10px;
+  border-radius: 12px;
+}
+
+.pending {
+  color: #f39c12;
+  font-weight: bold;
+  background: rgba(243, 156, 18, 0.1);
+  padding: 4px 10px;
+  border-radius: 12px;
+}
+
+.overdue {
+  color: #e74c3c;
+  font-weight: bold;
+  background: rgba(231, 76, 60, 0.1);
+  padding: 4px 10px;
+  border-radius: 12px;
+}
+
+.completeButton {
+  background: linear-gradient(135deg, #27ae60, #219a52);
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.completeButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(39, 174, 96, 0.3);
+}
+
+.finalDoctor {
+  background: linear-gradient(135deg, #d4edda, #c3e6cb);
+  padding: 20px;
+  border-radius: 8px;
+  border-left: 4px solid #28a745;
+  margin-top: 25px;
+  text-align: center;
+}
+
+.finalDoctor h5 {
+  color: #155724;
+  margin-bottom: 12px;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.finalDoctor p {
+  color: #155724;
+  margin: 8px 0;
+  font-size: 15px;
+}
+
+.noSelection {
+  text-align: center;
+  padding: 60px 20px;
+  color: #7f8c8d;
+  font-style: italic;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 2px dashed #dee2e6;
+}
+
+/* All Strike Records Section */
+.allStrikesSection {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  margin-top: 30px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.allStrikesSection h4 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+  font-size: 1.3rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.allStrikesSection h4::before {
+  content: "📋";
+}
+
+.strikesTable {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.dataTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.dataTable th {
+  background: linear-gradient(135deg, #2c3e50, #34495e);
+  color: white;
+  padding: 15px 12px;
+  text-align: left;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+}
+
+.dataTable td {
+  padding: 12px;
+  border-bottom: 1px solid #e9ecef;
+  color: #555;
+}
+
+.dataTable tr:hover {
+  background: #f8f9fa;
+}
+
+.strikeRow:nth-child(even) {
+  background: #fafafa;
+}
+
+.strikeRow:nth-child(even):hover {
+  background: #f1f1f1;
+}
+
+.aaBadge,
+.daBadge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.aaBadge {
+  background: #e74c3c;
+  color: white;
+}
+
+.daBadge {
+  background: #3498db;
+  color: white;
+}
+
+.emailButton {
+  background: #9b59b6;
+  color: white;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-left: 5px;
+}
+
+.emailButton:hover {
+  background: #8e44ad;
+}
+
+.noStrikes {
+  text-align: center;
+  padding: 40px;
+  color: #7f8c8d;
+  font-style: italic;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 2px dashed #dee2e6;
+}
+
+/* Modal Styles */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
+  backdrop-filter: blur(5px);
+}
+
+.strikeModal,
+.emailModal,
+.confirmationModal,
+.exportModal {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  animation: modalAppear 0.3s ease-out;
+}
+
+@keyframes modalAppear {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.strikeModal h4,
+.emailModal h4,
+.confirmationModal h4,
+.exportModal h4 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+  font-size: 1.4rem;
+  border-bottom: 2px solid #e74c3c;
+  padding-bottom: 10px;
+}
+
+.strikeForm {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-bottom: 25px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.formGroup label {
+  font-weight: 600;
+  color: #495057;
+  font-size: 14px;
+}
+
+.formGroup input,
+.formGroup select,
+.formGroup textarea {
+  padding: 10px 14px;
+  border: 2px solid #e9ecef;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.3s ease;
+}
+
+.formGroup input:focus,
+.formGroup select:focus,
+.formGroup textarea:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.doctorsChecklist {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.doctorCheckbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.doctorCheckbox:hover {
+  background: #e9ecef;
+  transform: translateX(5px);
+}
+
+.doctorCheckbox input[type="radio"]:checked + span {
+  font-weight: bold;
+  color: #e74c3c;
+}
+
+.doctorCheckbox input[type="radio"]:checked ~ span::before {
+  content: "✓ ";
+  color: #27ae60;
+}
+
+.emailTextarea {
+  width: 100%;
+  height: 200px;
+  padding: 15px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  resize: vertical;
+  font-family: "Courier New", monospace;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.modalButtons {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.cancelButton {
+  background: #95a5a6;
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.cancelButton:hover {
+  background: #7f8c8d;
+  transform: translateY(-1px);
+}
+
+.confirmButton {
+  background: linear-gradient(135deg, #27ae60, #219a52);
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.confirmButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+}
+
+.confirmButton:disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.confirmDeleteButton {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.confirmDeleteButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+}
+
+/* Side Panel */
+.sidePanel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 400px;
+  height: 100vh;
+  background: white;
+  box-shadow: -5px 0 25px rgba(0, 0, 0, 0.2);
+  z-index: 1001;
+  padding: 25px;
+  overflow-y: auto;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.closeButton {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.closeButton:hover {
+  background: #c0392b;
+  transform: scale(1.1);
+}
+
+.sidePanel h4 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+  font-size: 1.3rem;
+  border-bottom: 2px solid #3498db;
+  padding-bottom: 10px;
+}
+
+.editForm {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.buttonGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.saveButton,
+.deleteButton {
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.saveButton {
+  background: linear-gradient(135deg, #27ae60, #219a52);
+  color: white;
+}
+
+.saveButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+}
+
+.deleteButton {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  color: white;
+}
+
+.deleteButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+}
+
+/* Export Options */
+.exportOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.exportOptions label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.exportOptions label:hover {
+  background: #e9ecef;
+  transform: translateX(5px);
+}
+
+.exportOptions input[type="radio"] {
+  transform: scale(1.2);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .contentLayout {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .casesSection,
+  .strikeSection {
+    max-height: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .panelStrikeContainer {
+    padding: 15px;
+  }
+
+  .controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15px;
+  }
+
+  .searchSection {
+    min-width: auto;
+  }
+
+  .actionButtons {
+    justify-content: center;
+  }
+
+  .contentLayout {
+    gap: 15px;
+  }
+
+  .casesSection,
+  .strikeSection,
+  .allStrikesSection {
+    padding: 20px;
+  }
+
+  .caseHeader,
+  .strikeHeader,
+  .followUpHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .modalButtons {
+    flex-direction: column;
+  }
+
+  .cancelButton,
+  .confirmButton,
+  .confirmDeleteButton {
+    width: 100%;
+    text-align: center;
+  }
+
+  .sidePanel {
+    width: 100%;
+  }
+
+  .dataTable {
+    font-size: 12px;
+  }
+
+  .dataTable th,
+  .dataTable td {
+    padding: 8px 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .panelStrikeContainer {
+    padding: 10px;
+  }
+
+  .panelStrikeContainer h3 {
+    font-size: 1.5rem;
+    text-align: center;
+  }
+
+  .casesSection,
+  .strikeSection,
+  .allStrikesSection {
+    padding: 15px;
+  }
+
+  .strikeModal,
+  .emailModal,
+  .confirmationModal,
+  .exportModal {
+    padding: 20px;
+  }
+
+  .actionButtons {
+    flex-direction: column;
+  }
+
+  .importButton,
+  .exportButton,
+  .clearButton {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Scrollbar Styling */
+.casesSection::-webkit-scrollbar,
+.strikeSection::-webkit-scrollbar,
+.sidePanel::-webkit-scrollbar,
+.emailTextarea::-webkit-scrollbar {
+  width: 6px;
+}
+
+.casesSection::-webkit-scrollbar-track,
+.strikeSection::-webkit-scrollbar-track,
+.sidePanel::-webkit-scrollbar-track,
+.emailTextarea::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.casesSection::-webkit-scrollbar-thumb,
+.strikeSection::-webkit-scrollbar-thumb,
+.sidePanel::-webkit-scrollbar-thumb,
+.emailTextarea::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.casesSection::-webkit-scrollbar-thumb:hover,
+.strikeSection::-webkit-scrollbar-thumb:hover,
+.sidePanel::-webkit-scrollbar-thumb:hover,
+.emailTextarea::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}

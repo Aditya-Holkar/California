@@ -15,6 +15,8 @@ export default function MainQMELayout({
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const tabs = [
+    { name: "Panel Pull", href: "/MainQME/PanelPull" },
+    { name: "Panel Strike", href: "/MainQME/PanelStrike" },
     { name: "QME", href: "/MainQME/QME" },
     { name: "QMESC", href: "/MainQME/QMESC" },
   ];

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface QmeRecord {
   id: string;
   date: string;
@@ -13,6 +14,7 @@ export interface QmeRecord {
 export type ScheduledStatus = "Yes" | "No" | "Cancelled";
 
 export interface ExtendedQmeRecord extends QmeRecord {
+  [x: string]: any;
   scheduled: ScheduledStatus;
   address: string;
   appointmentDate: string;

@@ -1,0 +1,292 @@
+/* components/WordEditor/WordEditor.module.css */
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+}
+
+.uploadSection {
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.uploadSection h2 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+  font-size: 28px;
+}
+
+.uploadArea {
+  margin-bottom: 20px;
+}
+
+.fileInput {
+  display: none;
+}
+
+.fileInputLabel {
+  display: block;
+  border: 2px dashed #bdc3c7;
+  border-radius: 8px;
+  padding: 40px 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.fileInputLabel:hover {
+  border-color: #3498db;
+  background-color: #f8f9fa;
+}
+
+.uploadContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.uploadIcon {
+  font-size: 48px;
+  margin-bottom: 15px;
+}
+
+.uploadText {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #2c3e50;
+}
+
+.uploadSubtext {
+  font-size: 14px;
+  color: #7f8c8d;
+}
+
+.fileInfo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 20px;
+  background-color: #e8f4fc;
+  border-radius: 6px;
+  margin-top: 15px;
+}
+
+.fileIcon {
+  margin-right: 10px;
+  font-size: 20px;
+}
+
+.fileName {
+  font-weight: 500;
+}
+
+.replacementsSection,
+.editorSection {
+  margin-bottom: 30px;
+}
+
+.sectionCard {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+}
+
+.sectionCard h3 {
+  color: #2c3e50;
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 22px;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #ecf0f1;
+}
+
+.helpText {
+  color: #7f8c8d;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.replacementRow {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+  align-items: flex-end;
+}
+
+.inputGroup {
+  flex: 1;
+}
+
+.inputLabel {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #34495e;
+  font-size: 14px;
+}
+
+.textInput {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #bdc3c7;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.3s;
+}
+
+.textInput:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.removeButton {
+  padding: 10px 16px;
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s;
+  white-space: nowrap;
+  height: fit-content;
+}
+
+.removeButton:hover:not(:disabled) {
+  background-color: #c0392b;
+}
+
+.removeButton:disabled {
+  background-color: #95a5a6;
+  cursor: not-allowed;
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 15px;
+  margin-top: 10px;
+}
+
+.addButton {
+  padding: 12px 20px;
+  background-color: #2ecc71;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.3s;
+}
+
+.addButton:hover {
+  background-color: #27ae60;
+}
+
+.applyButton {
+  padding: 12px 24px;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.3s;
+}
+
+.applyButton:hover {
+  background-color: #2980b9;
+}
+
+.clearButton {
+  padding: 8px 16px;
+  background-color: #95a5a6;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s;
+}
+
+.clearButton:hover {
+  background-color: #7f8c8d;
+}
+
+.editorHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #ecf0f1;
+}
+
+.downloadButton {
+  padding: 12px 24px;
+  background-color: #9b59b6;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.3s;
+}
+
+.downloadButton:hover {
+  background-color: #8e44ad;
+}
+
+.editor {
+  min-height: 400px;
+  border: 1px solid #bdc3c7;
+  border-radius: 4px;
+  padding: 20px;
+  font-size: 16px;
+  line-height: 1.6;
+  outline: none;
+  overflow-y: auto;
+  max-height: 600px;
+  white-space: pre-wrap;
+}
+
+.editor:focus {
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .container {
+    padding: 15px;
+  }
+
+  .replacementRow {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .buttonGroup {
+    flex-direction: column;
+  }
+
+  .editorHeader,
+  .sectionHeader {
+    flex-direction: column;
+    gap: 15px;
+    align-items: flex-start;
+  }
+}
