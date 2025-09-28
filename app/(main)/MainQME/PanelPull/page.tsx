@@ -6,6 +6,7 @@ import styles from "../../../styles/PanelPull.module.css";
 import * as XLSX from "xlsx";
 import { useLocalStorage } from "../../../hooks/useLocalStorage";
 import { ExtendedQmeRecord, ScheduledStatus } from "../../../Utils/qme";
+import { useRouter } from "next/navigation";
 
 interface PanelPullRecord {
   id: string;
@@ -28,6 +29,35 @@ export default function PanelPullPage() {
     QME_STORAGE_KEY,
     []
   );
+
+  const router = useRouter();
+
+  const navigateToQmeScheduling = (record: ExtendedQmeRecord) => {
+    // Check if there are any doctors available
+    const availableDoctors = [
+      record.doctor1,
+      record.doctor2,
+      record.doctor3,
+    ].filter((doctor) => doctor && doctor.trim() !== "");
+
+    if (availableDoctors.length === 0) {
+      alert("No doctors available for this case. Please add doctors first.");
+      return;
+    }
+
+    // Pass only the identifier - QME page will load the data
+    const navigationData = {
+      caseId: record.id,
+      caseNumber: record.caseNumber,
+      source: "panelPull", // To indicate where this navigation came from
+    };
+
+    // Store the data in localStorage for the QME page to access
+    localStorage.setItem("qmeNavigationData", JSON.stringify(navigationData));
+
+    // Navigate to QME page
+    router.push("/MainQME/PanelStrike");
+  };
 
   const [formData, setFormData] = useState<Omit<PanelPullRecord, "id">>({
     caseNumber: "",
@@ -574,13 +604,16 @@ Thanks,`;
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            setSelectedRecord(record);
-                            setShowImportToQmeModal(true);
+                            navigateToQmeScheduling(record);
                           }}
-                          className={styles.importQmeButton}
-                          disabled={!!record.doctorName}
+                          className={styles.scheduleButton}
+                          disabled={
+                            !record.doctor1 &&
+                            !record.doctor2 &&
+                            !record.doctor3
+                          }
                         >
-                          {record.doctorName ? "Doctor Set" : "Set Doctor"}
+                          Open Case
                         </button>
                       </td>
                     </tr>
@@ -689,7 +722,7 @@ Thanks,`;
               >
                 Remove Panel Data
               </button>
-              <button
+              {/* <button
                 onClick={() => {
                   setShowImportToQmeModal(true);
                   setShowSidePanel(false);
@@ -698,7 +731,7 @@ Thanks,`;
                 disabled={!!selectedRecord.doctorName}
               >
                 {selectedRecord.doctorName ? "Doctor Set" : "Set Doctor"}
-              </button>
+              </button> */}
             </div>
           </div>
 

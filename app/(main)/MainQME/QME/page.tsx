@@ -11,6 +11,7 @@ import {
   QmeRecord,
   ScheduledStatus,
 } from "../../../Utils/qme";
+import { useRouter } from "next/navigation";
 
 export default function EmailTemplate() {
   const [applicantName, setApplicantName] = useState("");
@@ -31,6 +32,8 @@ export default function EmailTemplate() {
 
   const generateId = () => Math.random().toString(36).substring(2, 9);
 
+  const router = useRouter();
+
   // In your QME Call page component, add this useEffect
   useEffect(() => {
     const prefillData = localStorage.getItem("qmeCallPrefillData");
@@ -48,6 +51,25 @@ export default function EmailTemplate() {
       localStorage.removeItem("qmeCallPrefillData");
     }
   }, []);
+
+  const navigateToPanelStrike = () => {
+    // Prepare data to pass back to Panel Strike page
+    const panelStrikeData = {
+      caseNumber: caseNumber,
+      applicantName: applicantName,
+      doctorName: doctorName,
+      specialty: "", // You can add this if you have it
+    };
+
+    // Store the data in localStorage for the Panel Strike page to access
+    localStorage.setItem(
+      "panelStrikePrefillData",
+      JSON.stringify(panelStrikeData)
+    );
+
+    // Navigate back to Panel Strike page
+    router.push("/MainQME/QMESC"); // Adjust the path as needed
+  };
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -405,6 +427,16 @@ Please let me know if you require anything further from my end.
               Cancel
             </button>
           )}
+
+          {/* New Open in Panel Strike button */}
+          <button
+            type="button"
+            onClick={navigateToPanelStrike}
+            className={`${styles.button} ${styles.buttonSecondary}`}
+            disabled={!caseNumber} // Only enable if there's a case number
+          >
+            Open Scheduled QME Page
+          </button>
         </div>
       </form>
 

@@ -19,7 +19,7 @@ interface ExtendedQmeRecord extends QmeRecord {
   address: string;
   appointmentDate: string;
   appointmentTime: string;
-  hoursBeforeArrival: string;
+  minutesBeforeArrival: string;
   // New fields from Panel Pull
   specialty: string;
   doctor1: string;
@@ -79,7 +79,7 @@ export default function ViewQmeData({
           address: "",
           appointmentDate: "",
           appointmentTime: "",
-          hoursBeforeArrival: "1",
+          minutesBeforeArrival: "",
           // Panel Pull fields with defaults
           specialty: record.specialty || "",
           doctor1: record.doctor1 || "",
@@ -97,7 +97,7 @@ export default function ViewQmeData({
           address: record.address || "",
           appointmentDate: record.appointmentDate || "",
           appointmentTime: record.appointmentTime || "",
-          hoursBeforeArrival: record.hoursBeforeArrival || "1",
+          minutesBeforeArrival: record.minutesBeforeArrival || "",
           // Panel Pull fields with defaults
           specialty: record.specialty || "",
           doctor1: record.doctor1 || "",
@@ -134,7 +134,7 @@ export default function ViewQmeData({
       address: "",
       appointmentDate: "",
       appointmentTime: "",
-      hoursBeforeArrival: "1",
+      minutesBeforeArrival: "",
       // Panel Pull fields with defaults
       specialty: "",
       doctor1: "",
@@ -170,22 +170,27 @@ export default function ViewQmeData({
     return `${hour12}:${minutes} ${period}`;
   };
 
-  // Calculate arrival time based on hours before
+  // Calculate arrival time based on minutes before
   const calculateArrivalTime = (
     appointmentTime: string,
-    hoursBefore: string
+    minutesBefore: string
   ) => {
-    if (!appointmentTime || !hoursBefore) return "";
+    if (!appointmentTime || !minutesBefore) return "";
 
     const [hours, minutes] = appointmentTime.split(":");
     const totalMinutes =
-      parseInt(hours) * 60 + parseInt(minutes) - parseFloat(hoursBefore) * 60;
+      parseInt(hours) * 60 + parseInt(minutes) - parseInt(minutesBefore);
 
     const arrivalHours = Math.floor(totalMinutes / 60) % 24;
     const arrivalMinutes = totalMinutes % 60;
 
-    return `${String(arrivalHours).padStart(2, "0")}:${String(
-      arrivalMinutes
+    // Handle negative time (previous day)
+    const finalHours = arrivalHours >= 0 ? arrivalHours : 24 + arrivalHours;
+    const finalMinutes =
+      arrivalMinutes >= 0 ? arrivalMinutes : 60 + arrivalMinutes;
+
+    return `${String(finalHours).padStart(2, "0")}:${String(
+      finalMinutes
     ).padStart(2, "0")}`;
   };
 
@@ -213,8 +218,10 @@ export default function ViewQmeData({
       appointmentTime: Array.from(
         new Set(records.map((r) => r.appointmentTime || "").filter(Boolean))
       ),
-      hoursBeforeArrival: Array.from(
-        new Set(records.map((r) => r.hoursBeforeArrival || "").filter(Boolean))
+      minutesBeforeArrival: Array.from(
+        new Set(
+          records.map((r) => r.minutesBeforeArrival || "").filter(Boolean)
+        )
       ),
       // New Panel Pull fields
       specialty: Array.from(
@@ -273,7 +280,7 @@ export default function ViewQmeData({
       address: record.address,
       appointmentDate: record.appointmentDate,
       appointmentTime: record.appointmentTime,
-      hoursBeforeArrival: record.hoursBeforeArrival,
+      minutesBeforeArrival: record.minutesBeforeArrival,
       // New Panel Pull fields
       specialty: record.specialty,
       doctor1: record.doctor1,
@@ -304,7 +311,24 @@ export default function ViewQmeData({
     setSelectedRecord({ ...selectedRecord, ...editData });
   };
 
+  // In your PanelStrike page component
+  useEffect(() => {
+    const prefillData = localStorage.getItem("panelStrikePrefillData");
+    if (prefillData) {
+      const data = JSON.parse(prefillData);
+      // Pre-fill your form fields with the data
+      // For example:
+      // setCaseNumber(data.caseNumber || "");
+      // setApplicantName(data.applicantName || "");
+      // etc.
+
+      // Clear the stored data after using it
+      localStorage.removeItem("panelStrikePrefillData");
+    }
+  }, []);
+
   // Delete record
+  // Replace the handleDelete function with this enhanced version
   const handleDelete = () => {
     if (!selectedRecord) return;
 
@@ -314,11 +338,45 @@ export default function ViewQmeData({
       );
       setRecords(updatedRecords);
       localStorage.setItem("qmeRecords", JSON.stringify(updatedRecords));
+
+      // Delete related strike records
+      deleteRelatedStrikeRecords(selectedRecord.caseNumber);
+
       setShowSidePanel(false);
       setShowDeleteConfirm(false);
 
-      // Dispatch event to notify other components
+      // Dispatch both storage event and custom event
       window.dispatchEvent(new Event("storage"));
+
+      // Dispatch custom event for same-tab synchronization
+      window.dispatchEvent(
+        new CustomEvent("qmeRecordDeleted", {
+          detail: { caseNumber: selectedRecord.caseNumber },
+        })
+      );
+    }
+  };
+
+  // Enhanced delete function with better error handling
+  const deleteRelatedStrikeRecords = (caseNumber: string) => {
+    try {
+      const strikeRecordsData = localStorage.getItem("panelStrikeRecords");
+      if (strikeRecordsData) {
+        const parsedStrikeRecords = JSON.parse(strikeRecordsData);
+        const updatedStrikeRecords = parsedStrikeRecords.filter(
+          (strike: any) => strike.caseNumber !== caseNumber
+        );
+
+        if (updatedStrikeRecords.length !== parsedStrikeRecords.length) {
+          localStorage.setItem(
+            "panelStrikeRecords",
+            JSON.stringify(updatedStrikeRecords)
+          );
+          console.log(`Deleted strike records for case ${caseNumber}`);
+        }
+      }
+    } catch (error) {
+      console.error("Error deleting related strike records:", error);
     }
   };
 
@@ -329,8 +387,8 @@ export default function ViewQmeData({
     const recordToUse = { ...selectedRecord, ...editData };
     return `(${recordToUse.specialty}) QME APPT :- Dr. ${
       recordToUse.doctorName
-    } | Early arrival ${recordToUse.hoursBeforeArrival} ${
-      parseFloat(recordToUse.hoursBeforeArrival) !== 1 ? "hours" : "hour"
+    } | Early arrival ${recordToUse.minutesBeforeArrival} ${
+      parseFloat(recordToUse.minutesBeforeArrival) !== 0 ? "hours" : "hour"
     } before QME`;
   };
 
@@ -340,7 +398,7 @@ export default function ViewQmeData({
     const recordToUse = { ...selectedRecord, ...editData };
     const arrivalTime = calculateArrivalTime(
       recordToUse.appointmentTime,
-      recordToUse.hoursBeforeArrival
+      recordToUse.minutesBeforeArrival
     );
 
     return `QME Details:
@@ -432,7 +490,7 @@ Please go ahead and prepare the Medical Index for this one.`;
     const recordToUse = { ...selectedRecord, ...editData };
     const arrivalTime = calculateArrivalTime(
       recordToUse.appointmentTime,
-      recordToUse.hoursBeforeArrival
+      recordToUse.minutesBeforeArrival
     );
 
     return `Subject: Spanish Interpreter Request for QME - ${
@@ -483,7 +541,7 @@ Thank you for your assistance in this matter.
     const recordToUse = { ...selectedRecord, ...editData };
     const arrivalTime = calculateArrivalTime(
       recordToUse.appointmentTime,
-      recordToUse.hoursBeforeArrival
+      recordToUse.minutesBeforeArrival
     );
 
     return `Subject: QME Notice Received for ${
@@ -503,8 +561,10 @@ Date & Time: ${recordToUse.appointmentDate} at ${formatTime(
     )}
 
 Arrival Time: ${formatTime(arrivalTime)} (${
-      recordToUse.hoursBeforeArrival
-    } hour${parseFloat(recordToUse.hoursBeforeArrival) !== 1 ? "s" : ""} before)
+      recordToUse.minutesBeforeArrival
+    } hour${
+      parseFloat(recordToUse.minutesBeforeArrival) !== 0 ? "s" : ""
+    } before)
 
 Address: ${recordToUse.address}
 
@@ -560,7 +620,7 @@ If you have any questions or need further adjustments, Please let me know.`;
           appointmentTime: item["Appointment Time"]
             ? convertTo24Hour(item["Appointment Time"].split(" ")[0])
             : "",
-          hoursBeforeArrival: item["Hours Before Arrival"] || "1",
+          minutesBeforeArrival: item["Hours Before Arrival"] || "",
           // New Panel Pull fields
           specialty: item["Specialty"] || "",
           doctor1: item["Doctor 1"] || "",
@@ -621,7 +681,7 @@ If you have any questions or need further adjustments, Please let me know.`;
     const excelData = recordsToExport.map((record) => {
       const arrivalTime = calculateArrivalTime(
         record.appointmentTime,
-        record.hoursBeforeArrival
+        record.minutesBeforeArrival
       );
       return {
         Date: record.date,
@@ -637,7 +697,7 @@ If you have any questions or need further adjustments, Please let me know.`;
         "Appointment Date": record.appointmentDate,
         "Appointment Time": formatTime(record.appointmentTime),
         "Arrival Time": formatTime(arrivalTime),
-        "Hours Before Arrival": record.hoursBeforeArrival,
+        "Hours Before Arrival": record.minutesBeforeArrival,
         // New Panel Pull fields
         Specialty: record.specialty,
         "Doctor 1": record.doctor1,
@@ -819,7 +879,7 @@ If you have any questions or need further adjustments, Please let me know.`;
               {filteredRecords.map((record) => {
                 const arrivalTime = calculateArrivalTime(
                   record.appointmentTime,
-                  record.hoursBeforeArrival
+                  record.minutesBeforeArrival
                 );
                 return (
                   <tr
@@ -840,8 +900,9 @@ If you have any questions or need further adjustments, Please let me know.`;
                     <td>{record.appointmentDate}</td>
                     <td>{formatTime(record.appointmentTime)}</td>
                     <td>
-                      {formatTime(arrivalTime)} ({record.hoursBeforeArrival} hr
-                      {record.hoursBeforeArrival !== "1" ? "s" : ""})
+                      {formatTime(arrivalTime)} ({record.minutesBeforeArrival}{" "}
+                      hr
+                      {record.minutesBeforeArrival !== "" ? "s" : ""})
                     </td>
                     {/* New Panel Pull fields */}
                     <td>{record.specialty}</td>
@@ -1010,22 +1071,21 @@ If you have any questions or need further adjustments, Please let me know.`;
             </div>
 
             <div className={styles.formGroup}>
-              <label>Hours Before Arrival:</label>
+              <label>Minutes Before Arrival:</label>
               <input
-                type="number"
-                min="0.5"
-                step="0.5"
-                value={editData.hoursBeforeArrival || "1"}
+                type="text"
+                value={editData.minutesBeforeArrival}
                 onChange={(e) =>
-                  handleEditChange("hoursBeforeArrival", e.target.value)
+                  handleEditChange("minutesBeforeArrival", e.target.value)
                 }
+                placeholder="Enter minutes"
               />
               <small>
                 Arrival Time:{" "}
                 {formatTime(
                   calculateArrivalTime(
                     editData.appointmentTime || "",
-                    editData.hoursBeforeArrival || "1"
+                    editData.minutesBeforeArrival || ""
                   )
                 )}
               </small>

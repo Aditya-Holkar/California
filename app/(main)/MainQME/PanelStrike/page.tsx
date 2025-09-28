@@ -41,6 +41,30 @@ export default function PanelStrikePage() {
     []
   );
 
+  // In your QME page component
+  useEffect(() => {
+    const navigationData =
+      localStorage.getItem("qmeCallPrefillData") ||
+      localStorage.getItem("qmeNavigationData");
+
+    if (navigationData) {
+      const data = JSON.parse(navigationData);
+
+      // Find the specific case in your QME records
+      const specificCase = qmeRecords.find(
+        (record) => record.id === data.caseId
+      );
+
+      if (specificCase) {
+        // Pre-fill the form or set state to show this specific case
+        setSelectedCase(specificCase);
+        // Clear the storage after use
+        localStorage.removeItem("qmeCallPrefillData");
+        localStorage.removeItem("qmeNavigationData");
+      }
+    }
+  }, []);
+
   // Add this function inside your component, after the state declarations
   const navigateToQmeScheduling = (strikeRecord: StrikeRecord) => {
     if (strikeRecord.remainingDoctors.length === 0) return;
@@ -99,6 +123,100 @@ export default function PanelStrikePage() {
       ),
     [qmeRecords]
   );
+
+  // Enhanced useEffect for better synchronization
+  useEffect(() => {
+    const handleQmeRecordDeleted = (event: CustomEvent) => {
+      const { caseNumber } = event.detail;
+
+      // Remove strike records for the deleted case
+      const updatedStrikeRecords = strikeRecords.filter(
+        (strike) => strike.caseNumber !== caseNumber
+      );
+
+      if (updatedStrikeRecords.length !== strikeRecords.length) {
+        setStrikeRecords(updatedStrikeRecords);
+        console.log(`Removed strike records for deleted case: ${caseNumber}`);
+      }
+    };
+
+    const handleStorageChange = () => {
+      // Sync with localStorage changes from other tabs
+      const savedQmeRecords = localStorage.getItem(QME_STORAGE_KEY);
+      const savedStrikeRecords = localStorage.getItem("panelStrikeRecords");
+
+      if (savedQmeRecords) {
+        try {
+          const parsedQmeRecords = JSON.parse(savedQmeRecords);
+          setQmeRecords(parsedQmeRecords);
+
+          // Get current case numbers
+          const caseNumbers = new Set(
+            parsedQmeRecords.map(
+              (record: ExtendedQmeRecord) => record.caseNumber
+            )
+          );
+
+          // Filter strike records to only include valid cases
+          let currentStrikeRecords = strikeRecords;
+          if (savedStrikeRecords) {
+            currentStrikeRecords = JSON.parse(savedStrikeRecords);
+          }
+
+          const validStrikeRecords = currentStrikeRecords.filter(
+            (strike: StrikeRecord) => caseNumbers.has(strike.caseNumber)
+          );
+
+          if (validStrikeRecords.length !== currentStrikeRecords.length) {
+            setStrikeRecords(validStrikeRecords);
+          }
+        } catch (error) {
+          console.error("Error processing storage change:", error);
+        }
+      }
+    };
+
+    // Add this function to your PanelStrikePage component
+    const cleanupOrphanedStrikeRecords = () => {
+      const caseNumbers = new Set(
+        qmeRecords.map((record) => record.caseNumber)
+      );
+      const updatedStrikeRecords = strikeRecords.filter((strike) =>
+        caseNumbers.has(strike.caseNumber)
+      );
+
+      if (updatedStrikeRecords.length !== strikeRecords.length) {
+        setStrikeRecords(updatedStrikeRecords);
+        console.log(
+          `Cleaned up ${
+            strikeRecords.length - updatedStrikeRecords.length
+          } orphaned strike records`
+        );
+      }
+    };
+
+    // Call this function when needed, for example:
+    // useEffect(() => {
+    //   cleanupOrphanedStrikeRecords();
+    // }, [qmeRecords]);
+
+    // Listen for custom event (same tab)
+    window.addEventListener(
+      "qmeRecordDeleted",
+      handleQmeRecordDeleted as EventListener
+    );
+
+    // Listen for storage events (other tabs)
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener(
+        "qmeRecordDeleted",
+        handleQmeRecordDeleted as EventListener
+      );
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, [strikeRecords, setStrikeRecords, setQmeRecords]);
 
   // Filter strike records based on search term
   const filteredStrikeRecords = useMemo(
