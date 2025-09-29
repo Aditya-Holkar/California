@@ -133,3 +133,8 @@ input[type="checkbox"]:indeterminate {
 [role="button"] {
   touch-action: manipulation;
 }
+input,
+textarea,
+text {
+  text-transform: capitalize;
+}
