@@ -77,7 +77,7 @@ export default function Sidebar() {
                 💵 Depo Bill
               </Link>
             </li>
-            <li>
+            {/* <li>
               <Link
                 href="/Visualize"
                 className={styles.sidebarLink}
@@ -85,7 +85,7 @@ export default function Sidebar() {
               >
                 Dashboards
               </Link>
-            </li>
+            </li> */}
 
             {/* Protected Links */}
             {authenticated ? (
