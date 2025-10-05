@@ -4,15 +4,16 @@
 
 import React, { useState, useEffect } from "react";
 import styles from "../styles/DepositionCalculator.module.css";
+import { useLocalStorage } from "../hooks/useLocalStorage";
 
 interface TimeEntry {
   id: string;
   description: string;
-  inputMode: "time" | "decimal"; // Time range or decimal hours
+  inputMode: "time" | "decimal";
   startTime: string;
   endTime: string;
   decimalHours: number;
-  duration: number; // in minutes
+  duration: number;
 }
 
 interface DepositionBill {
@@ -31,14 +32,15 @@ const DepositionCalculator: React.FC = () => {
   const [rate, setRate] = useState<number>(100);
   const [entries, setEntries] = useState<TimeEntry[]>([]);
 
-  // Case information
   const [applicantName, setApplicantName] = useState("");
   const [caseName, setCaseName] = useState("");
   const [caseNumber, setCaseNumber] = useState("");
 
-  // View saved bills
   const [showSavedBills, setShowSavedBills] = useState(false);
-  const [savedBills, setSavedBills] = useState<DepositionBill[]>([]);
+  const [savedBills, setSavedBills] = useLocalStorage<DepositionBill[]>(
+    "deposition_bills",
+    []
+  );
   const [filteredBills, setFilteredBills] = useState<DepositionBill[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [editingBillId, setEditingBillId] = useState<string | null>(null);
@@ -53,20 +55,7 @@ const DepositionCalculator: React.FC = () => {
   }, [searchQuery, savedBills]);
 
   const loadSavedBills = () => {
-    const bills: DepositionBill[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key?.startsWith("depo_bill_")) {
-        const bill = JSON.parse(localStorage.getItem(key) || "{}");
-        bills.push(bill);
-      }
-    }
-    const sortedBills = bills.sort(
-      (a, b) =>
-        new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime()
-    );
-    setSavedBills(sortedBills);
-    setFilteredBills(sortedBills);
+    filterBills();
   };
 
   const filterBills = () => {
@@ -113,16 +102,13 @@ const DepositionCalculator: React.FC = () => {
       return;
     }
 
-    // Create CSV with all bills in rows
     let csv = "WCAB Deposition Bills Export\n";
     csv += `Export Date:,${new Date().toLocaleDateString()}\n`;
     csv += `Total Bills:,${billsToExport.length}\n\n`;
 
-    // Headers for the consolidated view
     csv +=
       "Bill #,Applicant Name,Case Name,Case Number,Date Created,Entry #,Description,Input Mode,Start/Hours,End Time,Duration (min),Duration (hrs),Rate Type,Rate Amount,Entry Amount,Bill Total\n";
 
-    // Process each bill
     billsToExport.forEach((bill, billIndex) => {
       const billTotal = bill.entries.reduce((sum, entry) => {
         const amount =
@@ -164,11 +150,9 @@ const DepositionCalculator: React.FC = () => {
         csv += `${billTotal.toFixed(2)}\n`;
       });
 
-      // Add a blank row between bills for readability
       csv += "\n";
     });
 
-    // Summary section
     csv += "\n\nSUMMARY\n";
     csv +=
       "Bill #,Applicant Name,Case Name,Total Entries,Total Duration (min),Total Duration (hrs),Total Amount\n";
@@ -190,7 +174,6 @@ const DepositionCalculator: React.FC = () => {
       )}\n`;
     });
 
-    // Grand total
     const grandTotalMinutes = billsToExport.reduce(
       (sum, bill) => sum + bill.entries.reduce((s, e) => s + e.duration, 0),
       0
@@ -214,7 +197,6 @@ const DepositionCalculator: React.FC = () => {
       2
     )},${grandTotalAmount.toFixed(2)}\n`;
 
-    // Create and download
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
@@ -298,7 +280,6 @@ const DepositionCalculator: React.FC = () => {
         if (entry.id === id) {
           const updated = { ...entry, [field]: value };
 
-          // Recalculate duration based on input mode
           if (field === "startTime" || field === "endTime") {
             updated.duration = calculateDuration(
               field === "startTime" ? (value as string) : entry.startTime,
@@ -307,7 +288,6 @@ const DepositionCalculator: React.FC = () => {
           } else if (field === "decimalHours") {
             updated.duration = decimalToMinutes(value as number);
           } else if (field === "inputMode") {
-            // When switching modes, recalculate duration
             if (value === "time") {
               updated.duration = calculateDuration(
                 entry.startTime,
@@ -353,9 +333,16 @@ const DepositionCalculator: React.FC = () => {
       entries: [...entries],
     };
 
-    localStorage.setItem(bill.id, JSON.stringify(bill));
+    if (editingBillId) {
+      const updatedBills = savedBills.map((b) =>
+        b.id === editingBillId ? bill : b
+      );
+      setSavedBills(updatedBills);
+    } else {
+      setSavedBills([bill, ...savedBills]);
+    }
+
     alert("Bill saved successfully!");
-    loadSavedBills();
     setEditingBillId(null);
   };
 
@@ -372,8 +359,12 @@ const DepositionCalculator: React.FC = () => {
 
   const deleteBill = (id: string) => {
     if (confirm("Are you sure you want to delete this bill?")) {
-      localStorage.removeItem(id);
-      loadSavedBills();
+      const updatedBills = savedBills.filter((bill) => bill.id !== id);
+      setSavedBills(updatedBills);
+
+      if (editingBillId === id) {
+        newBill();
+      }
     }
   };
 
@@ -386,7 +377,6 @@ const DepositionCalculator: React.FC = () => {
   };
 
   const copyTableToClipboard = () => {
-    // Create a clean HTML table for Word
     let htmlTable = `
       <table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%; font-family: Arial, sans-serif;">
         <thead>
@@ -403,7 +393,6 @@ const DepositionCalculator: React.FC = () => {
         <tbody>
     `;
 
-    // Add data rows
     entries.forEach((entry, index) => {
       const amount = (
         rateType === "minute"
@@ -435,7 +424,6 @@ const DepositionCalculator: React.FC = () => {
       `;
     });
 
-    // Add total row
     htmlTable += `
         <tr style="background-color: #f7fafc; font-weight: bold;">
           <td colspan="5" style="text-align: right; padding: 12px;">TOTAL:</td>
@@ -466,14 +454,12 @@ const DepositionCalculator: React.FC = () => {
     </div>
     `;
 
-    // Create a temporary element
     const tempDiv = document.createElement("div");
     tempDiv.innerHTML = htmlTable;
     tempDiv.style.position = "absolute";
     tempDiv.style.left = "-9999px";
     document.body.appendChild(tempDiv);
 
-    // Copy to clipboard
     const range = document.createRange();
     range.selectNodeContents(tempDiv);
     const selection = window.getSelection();
@@ -489,13 +475,11 @@ const DepositionCalculator: React.FC = () => {
       alert("Failed to copy. Please try again.");
     }
 
-    // Cleanup
     selection?.removeAllRanges();
     document.body.removeChild(tempDiv);
   };
 
   const exportToExcel = () => {
-    // Create CSV content
     let csv = "WCAB Deposition Bill\n\n";
     csv += `Applicant Name:,${applicantName}\n`;
     csv += `Case Name:,${caseName}\n`;
@@ -505,11 +489,9 @@ const DepositionCalculator: React.FC = () => {
       rateType === "minute" ? "min" : "hr"
     }\n\n`;
 
-    // Table headers
     csv +=
       "#,Description,Input Mode,Start/Hours,End Time,Duration (min),Duration (hrs),Amount\n";
 
-    // Table rows
     entries.forEach((entry, index) => {
       const amount = (
         rateType === "minute"
@@ -529,12 +511,10 @@ const DepositionCalculator: React.FC = () => {
       )},$${amount}\n`;
     });
 
-    // Total row
     csv += `,,,,TOTAL:,${totalMinutes},${(totalMinutes / 60).toFixed(
       2
     )},$${totalAmount.toFixed(2)}\n`;
 
-    // Create blob and download
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
@@ -759,7 +739,6 @@ const DepositionCalculator: React.FC = () => {
             </div>
           )}
 
-          {/* Case Information */}
           <div className={styles.caseInfoGrid}>
             <div className={styles.formGroup}>
               <label className={`${styles.label} ${styles.required}`}>
@@ -797,7 +776,6 @@ const DepositionCalculator: React.FC = () => {
             </div>
           </div>
 
-          {/* Rate Settings */}
           <div className={styles.rateSection}>
             <div className={styles.rateTypeGroup}>
               <label className={styles.label}>Rate Type</label>
@@ -833,7 +811,6 @@ const DepositionCalculator: React.FC = () => {
             </div>
           </div>
 
-          {/* Table */}
           <div className={styles.tableContainer}>
             <table id="depo-table" className={styles.table}>
               <thead>
@@ -982,7 +959,6 @@ const DepositionCalculator: React.FC = () => {
             </table>
           </div>
 
-          {/* Action Buttons */}
           <div className={styles.actionButtons}>
             <button
               onClick={addNewEntry}
@@ -1010,7 +986,6 @@ const DepositionCalculator: React.FC = () => {
             </button>
           </div>
 
-          {/* Summary Card */}
           <div className={styles.summaryCard}>
             <h3 className={styles.summaryTitle}>Summary</h3>
             <div>
