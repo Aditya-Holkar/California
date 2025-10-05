@@ -108,7 +108,7 @@ export default function Sidebar() {
                     📞 Call
                   </Link>
                 </li>
-                <li>
+                {/* <li>
                   <Link
                     href="/Management"
                     className={styles.sidebarLink}
@@ -116,7 +116,7 @@ export default function Sidebar() {
                   >
                     💼 Management
                   </Link>
-                </li>
+                </li> */}
               </>
             ) : (
               <li>

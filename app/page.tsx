@@ -98,9 +98,9 @@ export default function Home() {
               Call
             </Link>
 
-            <Link href="/Management" className={styles.link}>
+            {/* <Link href="/Management" className={styles.link}>
               Management
-            </Link>
+            </Link> */}
           </>
         ) : (
           showPasswordInput && (
