@@ -41,6 +41,7 @@ export default function QMEDashboardClient({
     }
   }, [initialSheetUrl]);
 
+  // In your fetchQMEData function, update the error handling:
   const fetchQMEData = async (url?: string) => {
     const targetUrl = url || sheetUrl;
     if (!targetUrl) {
@@ -51,6 +52,7 @@ export default function QMEDashboardClient({
     try {
       setLoading(true);
       setError(null);
+      console.log("Fetching data for URL:", targetUrl);
 
       const response = await fetch("/api/qme-data", {
         method: "POST",
@@ -60,21 +62,25 @@ export default function QMEDashboardClient({
         body: JSON.stringify({ sheetUrl: targetUrl }),
       });
 
+      console.log("API response status:", response.status);
+
       if (!response.ok) {
-        throw new Error(
-          `Server returned ${response.status}: ${response.statusText}`
-        );
+        // Try to get error details from response
+        let errorDetails = `Server error: ${response.status} ${response.statusText}`;
+        try {
+          const errorData = await response.json();
+          errorDetails = errorData.error || errorDetails;
+          if (errorData.help) {
+            errorDetails += `\n\n${errorData.help}`;
+          }
+        } catch {
+          // If we can't parse JSON, use the status text
+        }
+        throw new Error(errorDetails);
       }
 
-      const text = await response.text();
-      let result;
-
-      try {
-        result = JSON.parse(text);
-      } catch (parseError) {
-        console.error("JSON Parse Error:", parseError, "Response text:", text);
-        throw new Error("Invalid response from server. Please try again.");
-      }
+      const result = await response.json();
+      console.log("API result:", result);
 
       if (result.error) {
         throw new Error(result.error);
@@ -87,7 +93,7 @@ export default function QMEDashboardClient({
         localStorage.setItem("qme-sheet-url", targetUrl);
       }
     } catch (err: any) {
-      console.error("Fetch error:", err);
+      console.error("Fetch error details:", err);
       setError(
         err.message ||
           "Failed to fetch QME data. Please check your connection and try again."
