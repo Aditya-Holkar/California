@@ -30,7 +30,7 @@ export default function QMEDashboard() {
   const [isUrlModalOpen, setIsUrlModalOpen] = useState(false);
   const [isSynchronizing, setIsSynchronizing] = useState(false);
   const [lastSynced, setLastSynced] = useState<Date | null>(null);
-  const [debugInfo, setDebugInfo] = useState<any>(null);
+  //   const [debugInfo, setDebugInfo] = useState<any>(null);
 
   // Load saved sheet URL on component mount
   useEffect(() => {
@@ -64,32 +64,44 @@ export default function QMEDashboard() {
         body: JSON.stringify({ sheetUrl: targetUrl }),
       });
 
-      const result = await response.json();
-
-      if (response.ok) {
-        setCases(result.data);
-        setLastSynced(new Date());
-
-        if (!url) {
-          localStorage.setItem("qme-sheet-url", targetUrl);
-        }
-      } else {
-        // Enhanced error message
-        const detailedError = result.help
-          ? `${result.error}\n\n${result.help}`
-          : result.error;
-        setError(detailedError);
-
-        if (url) {
-          localStorage.removeItem("qme-sheet-url");
-          setSheetUrl("");
-        }
+      // Check if response is OK and is JSON
+      if (!response.ok) {
+        throw new Error(
+          `Server returned ${response.status}: ${response.statusText}`
+        );
       }
-    } catch (err) {
-      console.error("Network error:", err);
+
+      const text = await response.text();
+      let result;
+
+      try {
+        result = JSON.parse(text);
+      } catch (parseError) {
+        console.error("JSON Parse Error:", parseError, "Response text:", text);
+        throw new Error("Invalid response from server. Please try again.");
+      }
+
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      setCases(result.data || []);
+      setLastSynced(new Date());
+
+      if (!url) {
+        localStorage.setItem("qme-sheet-url", targetUrl);
+      }
+    } catch (err: any) {
+      console.error("Fetch error:", err);
       setError(
-        "Network error: Unable to connect to server. Please check your internet connection and try again."
+        err.message ||
+          "Failed to fetch QME data. Please check your connection and try again."
       );
+
+      if (url) {
+        localStorage.removeItem("qme-sheet-url");
+        setSheetUrl("");
+      }
     } finally {
       setLoading(false);
       setIsSynchronizing(false);
@@ -120,7 +132,7 @@ export default function QMEDashboard() {
       setSheetUrl("");
       setCases([]);
       setLastSynced(null);
-      setDebugInfo(null);
+      //   setDebugInfo(null);
       setIsUrlModalOpen(true);
     }
   };
@@ -297,7 +309,7 @@ export default function QMEDashboard() {
       ) : (
         <>
           {/* Debug Information - Remove this section once everything works */}
-          {debugInfo && (
+          {/* {debugInfo && (
             <div className={styles.debugInfo}>
               <details>
                 <summary>
@@ -306,7 +318,7 @@ export default function QMEDashboard() {
                 <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
               </details>
             </div>
-          )}
+          )} */}
 
           <div className={styles.dashboardControls}>
             <div className={styles.searchBox}>
