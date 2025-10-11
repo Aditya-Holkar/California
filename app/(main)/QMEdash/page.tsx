@@ -44,6 +44,7 @@ export default function QMEDashboard() {
     }
   }, []);
 
+  // In your fetchQMEData function, update the error handling:
   const fetchQMEData = async (url?: string) => {
     const targetUrl = url || sheetUrl;
     if (!targetUrl) {
@@ -67,29 +68,28 @@ export default function QMEDashboard() {
 
       if (response.ok) {
         setCases(result.data);
-        setDebugInfo({
-          headers: result.headers,
-          sampleRow: result.sampleRow,
-          message: result.message,
-        });
         setLastSynced(new Date());
 
-        // Save the URL if this is a new successful connection
         if (!url) {
           localStorage.setItem("qme-sheet-url", targetUrl);
         }
       } else {
-        setError(result.error);
+        // Enhanced error message
+        const detailedError = result.help
+          ? `${result.error}\n\n${result.help}`
+          : result.error;
+        setError(detailedError);
+
         if (url) {
           localStorage.removeItem("qme-sheet-url");
           setSheetUrl("");
         }
       }
     } catch (err) {
+      console.error("Network error:", err);
       setError(
-        "Failed to fetch QME data. Please check your connection and try again."
+        "Network error: Unable to connect to server. Please check your internet connection and try again."
       );
-      console.error("Fetch error:", err);
     } finally {
       setLoading(false);
       setIsSynchronizing(false);
