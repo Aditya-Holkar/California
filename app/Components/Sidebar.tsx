@@ -68,15 +68,7 @@ export default function Sidebar() {
                 📍 Zip Code Search
               </Link>
             </li>
-            <li>
-              <Link
-                href="/Depo-bill"
-                className={styles.sidebarLink}
-                onClick={() => setIsOpen(false)}
-              >
-                💵 Depo Bill
-              </Link>
-            </li>
+
             {/* <li>
               <Link
                 href="/Visualize"
@@ -90,6 +82,16 @@ export default function Sidebar() {
             {/* Protected Links */}
             {authenticated ? (
               <>
+                <li>
+                  <Link
+                    href="/Depos"
+                    className={styles.sidebarLink}
+                    onClick={() => setIsOpen(false)}
+                  >
+                    💵 Depo Bill
+                  </Link>
+                </li>
+
                 <li>
                   <Link
                     href="/MainQME"

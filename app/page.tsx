@@ -81,15 +81,17 @@ export default function Home() {
         <Link href="/Zip" className={styles.link}>
           Zip Code Search
         </Link>
-        <Link href="/Depo-bill" className={styles.link}>
-          Depo Bill
-        </Link>
+
         {/* <Link href="/Visualize" className={styles.link}>
           Dashboards
         </Link> */}
 
         {authenticated ? (
           <>
+            <Link href="/Depos" className={styles.link}>
+              Depo Bill
+            </Link>
+
             <Link href="/MainQME" className={styles.link}>
               QME
             </Link>
