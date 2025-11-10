@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import styles from "../../styles/WordEditor.module.css";
+import styles from "../styles/WordEditor.module.css";
 
 interface FormData {
   applicant: string;

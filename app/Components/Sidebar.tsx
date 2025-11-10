@@ -69,6 +69,16 @@ export default function Sidebar() {
               </Link>
             </li>
 
+            <li>
+              <Link
+                href="/Temp"
+                className={styles.sidebarLink}
+                onClick={() => setIsOpen(false)}
+              >
+                Templates
+              </Link>
+            </li>
+
             {/* <li>
               <Link
                 href="/Visualize"

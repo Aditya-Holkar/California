@@ -1,661 +1,736 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable react/no-unescaped-entities */
-// app/dashboard/page.tsx
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
+import * as XLSX from "xlsx";
 import styles from "../../styles/QMEdash.module.css";
 
-interface QMECase {
-  id: string;
-  "Case Name": string;
-  "ADJ #": string;
-  "Claim #": string;
-  DOI: string;
-  "Applicant Name": string;
-  "QME Doctor Name": string;
-  "QME Specialty": string;
-  "DWC 105 Received": string;
-  "Panel Request Due": string;
-  "Panel Issued Date": string;
-  "Strike Deadline": string;
-  "QME Scheduled Date": string;
-  "Advocacy Letter Sent": string;
-  "QME Exam Date": string;
-  "QME Report Due Date": string;
-  "QME Status": string;
-  // Add index signature to fix TypeScript error
-  [key: string]: string;
-}
+type ExcelRow = Record<string, any>;
 
-const initialCases: QMECase[] = [
-  //   {
-  //     id: "1",
-  //     "Case Name": "Sanchez v. Premium Logistics",
-  //     "ADJ #": "ADJ1234567",
-  //     "Claim #": "WCK-98765",
-  //     DOI: "05/12/2022",
-  //     "Applicant Name": "Maria Sanchez",
-  //     "QME Doctor Name": "Dr. Robert Chang",
-  //     "QME Specialty": "Orthopedic Surgery",
-  //     "DWC 105 Received": "04/01/2024",
-  //     "Panel Request Due": "04/11/2024",
-  //     "Panel Issued Date": "04/15/2024",
-  //     "Strike Deadline": "04/25/2024",
-  //     "QME Scheduled Date": "06/15/2024",
-  //     "Advocacy Letter Sent": "06/01/2024",
-  //     "QME Exam Date": "06/15/2024",
-  //     "QME Report Due Date": "07/15/2024",
-  //     "QME Status": "QME Scheduled",
-  //   },
-  //   {
-  //     id: "2",
-  //     "Case Name": "Smith v. City Hotel & Spa",
-  //     "ADJ #": "ADJ7654321",
-  //     "Claim #": "WCK-55544",
-  //     DOI: "11/05/2023",
-  //     "Applicant Name": "James Smith",
-  //     "QME Doctor Name": "Dr. Amanda Lee",
-  //     "QME Specialty": "Psychiatry",
-  //     "DWC 105 Received": "04/15/2024",
-  //     "Panel Request Due": "04/25/2024",
-  //     "Panel Issued Date": "05/01/2024",
-  //     "Strike Deadline": "05/11/2024",
-  //     "QME Scheduled Date": "",
-  //     "Advocacy Letter Sent": "",
-  //     "QME Exam Date": "",
-  //     "QME Report Due Date": "07/01/2024",
-  //     "QME Status": "Awaiting QME Report",
-  //   },
-];
+type SortConfig = {
+  key: string;
+  direction: "ascending" | "descending";
+};
 
-export default function QMEDashboard() {
-  const [cases, setCases] = useState<QMECase[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [editingCase, setEditingCase] = useState<QMECase | null>(null);
-  const [isAddingNew, setIsAddingNew] = useState(false);
+type ZipDashboardProps = {
+  onUpload: (data: ExcelRow[]) => void;
+  excelData: ExcelRow[];
+};
 
-  // Load data from localStorage on component mount
+export default function ZipDashboard({
+  onUpload,
+  excelData,
+}: ZipDashboardProps) {
+  const [file, setFile] = useState<File | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
+  const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [filters, setFilters] = useState<Record<string, string>>({});
+  const [editingCell, setEditingCell] = useState<{
+    rowIndex: number;
+    column: string;
+  } | null>(null);
+  const [editValue, setEditValue] = useState("");
+  const [data, setData] = useState<ExcelRow[]>([]);
+  const [newRow, setNewRow] = useState<ExcelRow>({});
+  const [showAddRow, setShowAddRow] = useState(false);
+  const [newColumnName, setNewColumnName] = useState("");
+  const [showAddColumn, setShowAddColumn] = useState(false);
+  const [manualColumns, setManualColumns] = useState<string[]>([]);
+  const [originalFileName, setOriginalFileName] = useState<string>("data.xlsx");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Update local data when excelData changes
   useEffect(() => {
-    const savedCases = localStorage.getItem("qme-cases");
-    if (savedCases) {
-      setCases(JSON.parse(savedCases));
-    } else {
-      // Initialize with sample data
-      setCases(initialCases);
-      localStorage.setItem("qme-cases", JSON.stringify(initialCases));
+    if (excelData && Array.isArray(excelData) && excelData.length > 0) {
+      setData(excelData);
     }
-    setLoading(false);
-  }, []);
+  }, [excelData]);
 
-  // Save to localStorage whenever cases change
-  useEffect(() => {
-    if (cases.length > 0) {
-      localStorage.setItem("qme-cases", JSON.stringify(cases));
+  // Get all column names
+  const columns = useMemo(() => {
+    if (data && Array.isArray(data) && data.length > 0) {
+      return Object.keys(data[0]);
     }
-  }, [cases]);
+    // Return manual columns if no data yet
+    return manualColumns;
+  }, [data, manualColumns]);
 
-  const handleSaveCase = (updatedCase: QMECase) => {
-    if (isAddingNew) {
-      const newCase = { ...updatedCase, id: Date.now().toString() };
-      setCases((prev) => [...prev, newCase]);
-      setIsAddingNew(false);
-    } else {
-      setCases((prev) =>
-        prev.map((c) => (c.id === updatedCase.id ? updatedCase : c))
-      );
-      setEditingCase(null);
+  // Handle file upload
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setError(null);
+    if (e.target.files && e.target.files.length > 0) {
+      setFile(e.target.files[0]);
     }
   };
 
-  const handleDeleteCase = (id: string) => {
-    if (confirm("Are you sure you want to delete this case?")) {
-      setCases((prev) => prev.filter((c) => c.id !== id));
+  const handleUpload = () => {
+    if (!file) {
+      setError("Please select a file first");
+      return;
     }
-  };
 
-  const handleAddNew = () => {
-    const newEmptyCase: QMECase = {
-      id: "",
-      "Case Name": "",
-      "ADJ #": "",
-      "Claim #": "",
-      DOI: "",
-      "Applicant Name": "",
-      "QME Doctor Name": "",
-      "QME Specialty": "",
-      "DWC 105 Received": "",
-      "Panel Request Due": "",
-      "Panel Issued Date": "",
-      "Strike Deadline": "",
-      "QME Scheduled Date": "",
-      "Advocacy Letter Sent": "",
-      "QME Exam Date": "",
-      "QME Report Due Date": "",
-      "QME Status": "QME Panel Formed",
-    };
-    setEditingCase(newEmptyCase);
-    setIsAddingNew(true);
-  };
-
-  const handleExportCSV = () => {
-    const headers = [
-      "Case Name",
-      "ADJ #",
-      "Claim #",
-      "DOI",
-      "Applicant Name",
-      "QME Doctor Name",
-      "QME Specialty",
-      "DWC 105 Received",
-      "Panel Request Due",
-      "Panel Issued Date",
-      "Strike Deadline",
-      "QME Scheduled Date",
-      "Advocacy Letter Sent",
-      "QME Exam Date",
-      "QME Report Due Date",
-      "QME Status",
-    ];
-
-    const csvContent = [
-      headers.join(","),
-      ...cases.map((caseItem) =>
-        headers.map((header) => `"${caseItem[header] || ""}"`).join(",")
-      ),
-    ].join("\n");
-
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "qme-cases-export.csv";
-    a.click();
-    window.URL.revokeObjectURL(url);
-  };
-
-  const handleImportCSV = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+    // Store the original filename
+    const fileName = file.name.replace(/\.[^/.]+$/, ""); // Remove extension
+    setOriginalFileName(file.name);
 
     const reader = new FileReader();
     reader.onload = (e) => {
-      const csvText = e.target?.result as string;
-      const lines = csvText.split("\n");
-      const headers = lines[0]
-        .split(",")
-        .map((h) => h.replace(/"/g, "").trim());
-
-      const importedCases: QMECase[] = [];
-      for (let i = 1; i < lines.length; i++) {
-        if (lines[i].trim()) {
-          const values = lines[i]
-            .split(",")
-            .map((v) => v.replace(/"/g, "").trim());
-          const caseItem: any = { id: Date.now().toString() + i };
-          headers.forEach((header, index) => {
-            caseItem[header] = values[index] || "";
-          });
-          importedCases.push(caseItem as QMECase);
+      try {
+        const fileData = e.target?.result;
+        if (!fileData) {
+          setError("Failed to read file");
+          return;
         }
-      }
 
-      if (importedCases.length > 0) {
-        setCases(importedCases);
-        alert(`Successfully imported ${importedCases.length} cases`);
+        const workbook = XLSX.read(fileData, { type: "array" });
+
+        if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+          setError("No sheets found in the Excel file");
+          return;
+        }
+
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+
+        if (!worksheet) {
+          setError("Failed to read worksheet");
+          return;
+        }
+
+        const jsonData = XLSX.utils.sheet_to_json<ExcelRow>(worksheet, {
+          defval: "", // Set default value for empty cells
+          raw: false, // Format cells as strings
+        });
+
+        if (!jsonData || jsonData.length === 0) {
+          setError("No data found in the Excel file");
+          return;
+        }
+
+        // Clear manual columns when uploading data
+        setManualColumns([]);
+        setData(jsonData);
+        onUpload(jsonData);
+        setFile(null);
+        setError(null);
+
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+      } catch (err) {
+        console.error("Upload error:", err);
+        setError(
+          `Error processing the file: ${
+            err instanceof Error ? err.message : "Unknown error"
+          }`
+        );
       }
     };
-    reader.readAsText(file);
-    event.target.value = ""; // Reset file input
+
+    reader.onerror = () => {
+      setError("Failed to read the file. Please try again.");
+    };
+
+    reader.readAsArrayBuffer(file);
   };
 
-  const filteredCases = cases.filter((caseItem) => {
-    const searchableText = [
-      caseItem["Case Name"],
-      caseItem["Applicant Name"],
-      caseItem["ADJ #"],
-      caseItem["Claim #"],
-    ]
-      .join(" ")
-      .toLowerCase();
+  // CRUD Operations
+  const handleCellEdit = (rowIndex: number, column: string, value: any) => {
+    setEditingCell({ rowIndex, column });
+    setEditValue(String(value || ""));
+  };
 
-    const matchesSearch = searchableText.includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      filterStatus === "all" || caseItem["QME Status"] === filterStatus;
+  const handleCellSave = () => {
+    if (!editingCell) return;
 
-    return matchesSearch && matchesStatus;
-  });
+    const newData = [...data];
+    const actualIndex = (currentPage - 1) * rowsPerPage + editingCell.rowIndex;
 
-  const getStatusBadgeClass = (status: string) => {
-    switch (status) {
-      case "QME Scheduled":
-        return styles.statusScheduled;
-      case "Awaiting QME Report":
-        return styles.statusAwaiting;
-      case "Report Received":
-        return styles.statusReceived;
-      case "QME Panel Formed":
-        return styles.statusPanelFormed;
-      default:
-        return styles.statusDefault;
+    if (actualIndex < newData.length) {
+      newData[actualIndex][editingCell.column] = editValue;
+      setData(newData);
+      onUpload(newData);
+
+      // Auto-save to file
+      saveToFile(newData);
+    }
+
+    setEditingCell(null);
+    setEditValue("");
+  };
+
+  const handleCellCancel = () => {
+    setEditingCell(null);
+    setEditValue("");
+  };
+
+  const handleDeleteRows = () => {
+    if (selectedRows.size === 0) return;
+
+    const selectedIndices = Array.from(selectedRows).map(
+      (index) => (currentPage - 1) * rowsPerPage + index
+    );
+    const newData = data.filter((_, index) => !selectedIndices.includes(index));
+    setData(newData);
+    onUpload(newData);
+    setSelectedRows(new Set());
+    setCurrentPage(1);
+
+    // Auto-save to file
+    saveToFile(newData);
+  };
+
+  const handleAddRow = () => {
+    if (columns.length === 0) {
+      setError("Please add columns first");
+      return;
+    }
+
+    const rowToAdd: ExcelRow = {};
+    columns.forEach((col) => {
+      rowToAdd[col] = newRow[col] || "";
+    });
+
+    const newData = [...data, rowToAdd];
+    setData(newData);
+    onUpload(newData);
+    setNewRow({});
+    setShowAddRow(false);
+
+    // Auto-save to file
+    saveToFile(newData);
+  };
+
+  const handleAddColumn = () => {
+    if (!newColumnName.trim()) {
+      setError("Column name cannot be empty");
+      return;
+    }
+
+    // Check if column already exists
+    if (columns.includes(newColumnName.trim())) {
+      setError("Column already exists");
+      return;
+    }
+
+    if (data.length > 0) {
+      // Add column to existing data
+      const newData = data.map((row) => ({
+        ...row,
+        [newColumnName.trim()]: "",
+      }));
+      setData(newData);
+      onUpload(newData);
+
+      // Auto-save to file
+      saveToFile(newData);
+    } else {
+      // Add to manual columns when no data exists
+      setManualColumns([...manualColumns, newColumnName.trim()]);
+    }
+
+    setNewColumnName("");
+    setShowAddColumn(false);
+    setError(null);
+  };
+
+  const handleDeleteColumn = (column: string) => {
+    if (!window.confirm(`Are you sure you want to delete column "${column}"?`))
+      return;
+
+    if (data.length > 0) {
+      const newData = data.map((row) => {
+        const newRow = { ...row };
+        delete newRow[column];
+        return newRow;
+      });
+      setData(newData);
+      onUpload(newData);
+
+      // Auto-save to file
+      saveToFile(newData);
+    } else {
+      // Remove from manual columns
+      setManualColumns(manualColumns.filter((col) => col !== column));
     }
   };
 
-  const isDeadlineApproaching = (dueDate: string, days: number = 3) => {
-    if (!dueDate) return false;
-    try {
-      const due = new Date(dueDate);
-      const today = new Date();
-      const diffTime = due.getTime() - today.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      return diffDays <= days && diffDays >= 0;
-    } catch {
-      return false;
+  // Sorting functionality
+  const requestSort = (key: string) => {
+    let direction: "ascending" | "descending" = "ascending";
+    if (
+      sortConfig &&
+      sortConfig.key === key &&
+      sortConfig.direction === "ascending"
+    ) {
+      direction = "descending";
+    }
+    setSortConfig({ key, direction });
+  };
+
+  // Filtering functionality
+  const handleFilterChange = (key: string, value: string) => {
+    setFilters((prev) => ({
+      ...prev,
+      [key]: value || "",
+    }));
+    setCurrentPage(1);
+  };
+
+  // Get unique values for filter dropdowns
+  const getUniqueValues = (key: string) => {
+    if (!data || data.length === 0) return [];
+    const values = new Set(data.map((item) => item[key]));
+    return Array.from(values).filter(Boolean).sort();
+  };
+
+  // Process data with sorting and filtering
+  const processedData = useMemo(() => {
+    if (!data || !Array.isArray(data) || data.length === 0) return [];
+
+    let filteredData = [...data];
+
+    // Apply filters
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) {
+        filteredData = filteredData.filter((item) =>
+          String(item[key] || "")
+            .toLowerCase()
+            .includes(value.toLowerCase())
+        );
+      }
+    });
+
+    // Apply sorting
+    if (sortConfig) {
+      filteredData.sort((a, b) => {
+        const aValue = a[sortConfig.key] || "";
+        const bValue = b[sortConfig.key] || "";
+
+        if (aValue < bValue) {
+          return sortConfig.direction === "ascending" ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === "ascending" ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+
+    return filteredData;
+  }, [data, filters, sortConfig]);
+
+  // Pagination
+  const totalPages = Math.ceil(processedData.length / rowsPerPage);
+  const paginatedData = processedData.slice(
+    (currentPage - 1) * rowsPerPage,
+    currentPage * rowsPerPage
+  );
+
+  // Row selection
+  const toggleRowSelection = (index: number) => {
+    const newSelectedRows = new Set(selectedRows);
+    if (newSelectedRows.has(index)) {
+      newSelectedRows.delete(index);
+    } else {
+      newSelectedRows.add(index);
+    }
+    setSelectedRows(newSelectedRows);
+  };
+
+  const selectAllRows = () => {
+    if (selectedRows.size === paginatedData.length) {
+      setSelectedRows(new Set());
+    } else {
+      const newSelectedRows = new Set(
+        Array.from({ length: paginatedData.length }, (_, i) => i)
+      );
+      setSelectedRows(newSelectedRows);
     }
   };
 
-  const isDeadlinePassed = (dueDate: string) => {
-    if (!dueDate) return false;
-    try {
-      const due = new Date(dueDate);
-      const today = new Date();
-      return due < today;
-    } catch {
-      return false;
+  // Export selected rows
+  const exportSelectedRows = () => {
+    if (selectedRows.size === 0) return;
+
+    let selectedData = [];
+
+    if (selectedRows.size === paginatedData.length) {
+      selectedData = processedData;
+    } else {
+      selectedData = Array.from(selectedRows).map(
+        (index) => processedData[(currentPage - 1) * rowsPerPage + index]
+      );
     }
+
+    const ws = XLSX.utils.json_to_sheet(selectedData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Selected Data");
+    XLSX.writeFile(
+      wb,
+      `${originalFileName.replace(".xlsx", "")}_selected.xlsx`
+    );
   };
 
-  if (loading) {
-    return <div className={styles.loading}>Loading QME Dashboard...</div>;
-  }
+  // Save to file function - automatically saves changes
+  const saveToFile = (dataToSave: ExcelRow[]) => {
+    if (dataToSave.length === 0) return;
+
+    const ws = XLSX.utils.json_to_sheet(dataToSave);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Data");
+    XLSX.writeFile(wb, originalFileName);
+  };
+
+  // Export all data - manual save
+  const exportAllData = () => {
+    if (data.length === 0) {
+      setError("No data to export");
+      return;
+    }
+
+    saveToFile(data);
+  };
+
+  // Get sort indicator
+  const getSortIndicator = (key: string) => {
+    if (!sortConfig || sortConfig.key !== key) return null;
+    return sortConfig.direction === "ascending" ? "↑" : "↓";
+  };
+
+  // Clear all filters
+  const clearFilters = () => {
+    setFilters({});
+    setCurrentPage(1);
+  };
 
   return (
     <div className={styles.dashboardContainer}>
-      {/* Edit/Add Case Modal */}
-      {(editingCase || isAddingNew) && (
-        <EditCaseModal
-          caseItem={editingCase}
-          onSave={handleSaveCase}
-          onCancel={() => {
-            setEditingCase(null);
-            setIsAddingNew(false);
-          }}
-          isAdding={isAddingNew}
-        />
+      <div className={styles.header}>
+        <h2 className={styles.dashboardTitle}>Data Management Dashboard</h2>
+        <div className={styles.actions}>
+          <input
+            id="file-upload"
+            type="file"
+            accept=".xlsx, .xls"
+            onChange={handleFileChange}
+            className={styles.fileInput}
+            ref={fileInputRef}
+          />
+          <button
+            onClick={handleUpload}
+            disabled={!file}
+            className={styles.uploadButton}
+          >
+            Upload Excel
+          </button>
+        </div>
+      </div>
+
+      {error && (
+        <div className={styles.uploadError}>
+          {error}
+          <button onClick={() => setError(null)} className={styles.closeError}>
+            ×
+          </button>
+        </div>
       )}
 
-      <header className={styles.dashboardHeader}>
-        <div className={styles.headerLeft}>
-          <h1>QME Case Tracking Dashboard</h1>
-          <div className={styles.syncInfo}>
-            {cases.length} cases • Data stored locally in your browser
-          </div>
-        </div>
-
-        <div className={styles.headerActions}>
-          <button onClick={handleAddNew} className={styles.addButton}>
-            + Add New Case
+      {/* Action Buttons */}
+      <div className={styles.actionButtons}>
+        <button
+          onClick={() => setShowAddColumn(true)}
+          className={styles.addButton}
+        >
+          Add Column
+        </button>
+        <button
+          onClick={() => setShowAddRow(true)}
+          className={styles.addButton}
+          disabled={columns.length === 0}
+          title={columns.length === 0 ? "Add columns first" : ""}
+        >
+          Add Row
+        </button>
+        <button
+          onClick={handleDeleteRows}
+          disabled={selectedRows.size === 0}
+          className={styles.deleteButton}
+        >
+          Delete Selected Rows ({selectedRows.size})
+        </button>
+        <button
+          onClick={exportAllData}
+          disabled={data.length === 0}
+          className={styles.exportButton}
+        >
+          Save Changes
+        </button>
+        <button
+          onClick={exportSelectedRows}
+          disabled={selectedRows.size === 0}
+          className={styles.exportButton}
+        >
+          Export Selected
+        </button>
+        {Object.keys(filters).length > 0 && (
+          <button onClick={clearFilters} className={styles.clearFilterButton}>
+            Clear Filters
           </button>
-          <button onClick={handleExportCSV} className={styles.exportButton}>
-            Export CSV
-          </button>
-          <label className={styles.importButton}>
-            Import CSV
-            <input
-              type="file"
-              accept=".csv"
-              onChange={handleImportCSV}
-              style={{ display: "none" }}
-            />
-          </label>
-        </div>
-      </header>
+        )}
+      </div>
 
-      <div className={styles.dashboardControls}>
-        <div className={styles.searchBox}>
-          <input
-            type="text"
-            placeholder="Search cases, applicants, or ADJ#..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className={styles.searchInput}
-          />
-        </div>
-
-        <div className={styles.filterGroup}>
-          <label>Filter by Status:</label>
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className={styles.statusFilter}
+      {/* Add Column Modal */}
+      {showAddColumn && (
+        <div className={styles.modal} onClick={() => setShowAddColumn(false)}>
+          <div
+            className={styles.modalContent}
+            onClick={(e) => e.stopPropagation()}
           >
-            <option value="all">All Statuses</option>
-            <option value="QME Panel Formed">QME Panel Formed</option>
-            <option value="QME Scheduled">QME Scheduled</option>
-            <option value="Awaiting QME Report">Awaiting Report</option>
-            <option value="Report Received">Report Received</option>
-          </select>
-        </div>
-      </div>
-
-      <div className={styles.statsOverview}>
-        <div className={styles.statCard}>
-          <h3>Total Cases</h3>
-          <span className={styles.statNumber}>{cases.length}</span>
-        </div>
-        <div className={styles.statCard}>
-          <h3>Awaiting Report</h3>
-          <span className={styles.statNumber}>
-            {
-              cases.filter((c) => c["QME Status"] === "Awaiting QME Report")
-                .length
-            }
-          </span>
-        </div>
-        <div className={styles.statCard}>
-          <h3>Scheduled</h3>
-          <span className={styles.statNumber}>
-            {cases.filter((c) => c["QME Status"] === "QME Scheduled").length}
-          </span>
-        </div>
-        <div className={styles.statCard}>
-          <h3>Urgent Deadlines</h3>
-          <span className={`${styles.statNumber} ${styles.urgent}`}>
-            {
-              cases.filter(
-                (c) =>
-                  isDeadlineApproaching(c["Strike Deadline"]) ||
-                  isDeadlineApproaching(c["QME Report Due Date"]) ||
-                  isDeadlinePassed(c["Strike Deadline"]) ||
-                  isDeadlinePassed(c["QME Report Due Date"])
-              ).length
-            }
-          </span>
-        </div>
-      </div>
-
-      <div className={styles.casesTableContainer}>
-        <table className={styles.casesTable}>
-          <thead>
-            <tr>
-              <th>Case Name</th>
-              <th>ADJ #</th>
-              <th>Applicant</th>
-              <th>QME Doctor</th>
-              <th>Specialty</th>
-              <th>Strike Deadline</th>
-              <th>QME Date</th>
-              <th>Report Due</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredCases.map((caseItem) => (
-              <tr key={caseItem.id} className={styles.caseRow}>
-                <td className={styles.caseName}>{caseItem["Case Name"]}</td>
-                <td className={styles.adjNumber}>{caseItem["ADJ #"]}</td>
-                <td className={styles.applicantName}>
-                  {caseItem["Applicant Name"]}
-                </td>
-                <td className={styles.doctorName}>
-                  {caseItem["QME Doctor Name"]}
-                </td>
-                <td className={styles.specialty}>
-                  {caseItem["QME Specialty"]}
-                </td>
-                <td
-                  className={`${styles.deadline} ${
-                    isDeadlinePassed(caseItem["Strike Deadline"])
-                      ? styles.deadlinePassed
-                      : isDeadlineApproaching(caseItem["Strike Deadline"])
-                      ? styles.deadlineApproaching
-                      : ""
-                  }`}
-                >
-                  {caseItem["Strike Deadline"]}
-                </td>
-                <td className={styles.qmeDate}>
-                  {caseItem["QME Scheduled Date"]}
-                </td>
-                <td
-                  className={`${styles.reportDue} ${
-                    isDeadlinePassed(caseItem["QME Report Due Date"])
-                      ? styles.deadlinePassed
-                      : isDeadlineApproaching(caseItem["QME Report Due Date"])
-                      ? styles.deadlineApproaching
-                      : ""
-                  }`}
-                >
-                  {caseItem["QME Report Due Date"]}
-                </td>
-                <td>
-                  <span
-                    className={`${styles.statusBadge} ${getStatusBadgeClass(
-                      caseItem["QME Status"]
-                    )}`}
-                  >
-                    {caseItem["QME Status"]}
-                  </span>
-                </td>
-                <td className={styles.actions}>
-                  <button
-                    onClick={() => setEditingCase(caseItem)}
-                    className={styles.editButton}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDeleteCase(caseItem.id)}
-                    className={styles.deleteButton}
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {filteredCases.length === 0 && cases.length > 0 && (
-          <div className={styles.noResults}>
-            No cases found matching your criteria.
-          </div>
-        )}
-
-        {cases.length === 0 && (
-          <div className={styles.noResults}>
-            No cases found. Click "Add New Case" to get started.
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// Edit Case Modal Component
-function EditCaseModal({
-  caseItem,
-  onSave,
-  onCancel,
-  isAdding,
-}: {
-  caseItem: QMECase | null;
-  onSave: (caseItem: QMECase) => void;
-  onCancel: () => void;
-  isAdding: boolean;
-}) {
-  const [formData, setFormData] = useState<QMECase>(
-    caseItem || ({} as QMECase)
-  );
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave(formData);
-  };
-
-  const handleChange = (field: keyof QMECase, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  return (
-    <div className={styles.modalOverlay}>
-      <div className={styles.modalContent}>
-        <h2>{isAdding ? "Add New Case" : "Edit Case"}</h2>
-
-        <form onSubmit={handleSubmit} className={styles.caseForm}>
-          <div className={styles.formRow}>
-            <div className={styles.formGroup}>
-              <label>Case Name *</label>
-              <input
-                type="text"
-                value={formData["Case Name"] || ""}
-                onChange={(e) => handleChange("Case Name", e.target.value)}
-                required
-              />
+            <h3>Add New Column</h3>
+            <div className={styles.modalForm}>
+              <div className={styles.formGroup}>
+                <label>Column Name:</label>
+                <input
+                  type="text"
+                  value={newColumnName}
+                  onChange={(e) => setNewColumnName(e.target.value)}
+                  placeholder="Enter column name"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleAddColumn();
+                    if (e.key === "Escape") {
+                      setShowAddColumn(false);
+                      setNewColumnName("");
+                    }
+                  }}
+                  autoFocus
+                />
+              </div>
             </div>
-            <div className={styles.formGroup}>
-              <label>ADJ # *</label>
-              <input
-                type="text"
-                value={formData["ADJ #"] || ""}
-                onChange={(e) => handleChange("ADJ #", e.target.value)}
-                required
-              />
-            </div>
-          </div>
-
-          <div className={styles.formRow}>
-            <div className={styles.formGroup}>
-              <label>Claim #</label>
-              <input
-                type="text"
-                value={formData["Claim #"] || ""}
-                onChange={(e) => handleChange("Claim #", e.target.value)}
-              />
-            </div>
-            <div className={styles.formGroup}>
-              <label>DOI</label>
-              <input
-                type="date"
-                value={formData["DOI"] || ""}
-                onChange={(e) => handleChange("DOI", e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className={styles.formRow}>
-            <div className={styles.formGroup}>
-              <label>Applicant Name *</label>
-              <input
-                type="text"
-                value={formData["Applicant Name"] || ""}
-                onChange={(e) => handleChange("Applicant Name", e.target.value)}
-                required
-              />
-            </div>
-            <div className={styles.formGroup}>
-              <label>QME Doctor Name</label>
-              <input
-                type="text"
-                value={formData["QME Doctor Name"] || ""}
-                onChange={(e) =>
-                  handleChange("QME Doctor Name", e.target.value)
-                }
-              />
-            </div>
-          </div>
-
-          <div className={styles.formRow}>
-            <div className={styles.formGroup}>
-              <label>QME Specialty</label>
-              <select
-                value={formData["QME Specialty"] || ""}
-                onChange={(e) => handleChange("QME Specialty", e.target.value)}
+            <div className={styles.modalActions}>
+              <button onClick={handleAddColumn} className={styles.saveButton}>
+                Add Column
+              </button>
+              <button
+                onClick={() => {
+                  setShowAddColumn(false);
+                  setNewColumnName("");
+                }}
+                className={styles.cancelButton}
               >
-                <option value="">Select Specialty</option>
-                <option value="Orthopedic Surgery">Orthopedic Surgery</option>
-                <option value="Psychiatry">Psychiatry</option>
-                <option value="Neurology">Neurology</option>
-                <option value="Internal Medicine">Internal Medicine</option>
-                <option value="Pain Management">Pain Management</option>
-              </select>
+                Cancel
+              </button>
             </div>
-            <div className={styles.formGroup}>
-              <label>QME Status</label>
-              <select
-                value={formData["QME Status"] || ""}
-                onChange={(e) => handleChange("QME Status", e.target.value)}
+          </div>
+        </div>
+      )}
+
+      {/* Add Row Modal */}
+      {showAddRow && (
+        <div className={styles.modal} onClick={() => setShowAddRow(false)}>
+          <div
+            className={styles.modalContent}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3>Add New Row</h3>
+            <div className={styles.modalForm}>
+              {columns.map((col) => (
+                <div key={col} className={styles.formGroup}>
+                  <label>{col}:</label>
+                  <input
+                    type="text"
+                    value={newRow[col] || ""}
+                    onChange={(e) =>
+                      setNewRow({ ...newRow, [col]: e.target.value })
+                    }
+                  />
+                </div>
+              ))}
+            </div>
+            <div className={styles.modalActions}>
+              <button onClick={handleAddRow} className={styles.saveButton}>
+                Add Row
+              </button>
+              <button
+                onClick={() => {
+                  setShowAddRow(false);
+                  setNewRow({});
+                }}
+                className={styles.cancelButton}
               >
-                <option value="QME Panel Formed">QME Panel Formed</option>
-                <option value="QME Scheduled">QME Scheduled</option>
-                <option value="Awaiting QME Report">Awaiting QME Report</option>
-                <option value="Report Received">Report Received</option>
-              </select>
+                Cancel
+              </button>
             </div>
           </div>
+        </div>
+      )}
 
-          <div className={styles.formRow}>
-            <div className={styles.formGroup}>
-              <label>Strike Deadline</label>
-              <input
-                type="date"
-                value={formData["Strike Deadline"] || ""}
-                onChange={(e) =>
-                  handleChange("Strike Deadline", e.target.value)
-                }
-              />
-            </div>
-            <div className={styles.formGroup}>
-              <label>QME Scheduled Date</label>
-              <input
-                type="date"
-                value={formData["QME Scheduled Date"] || ""}
-                onChange={(e) =>
-                  handleChange("QME Scheduled Date", e.target.value)
-                }
-              />
-            </div>
-          </div>
-
-          <div className={styles.formRow}>
-            <div className={styles.formGroup}>
-              <label>QME Report Due Date</label>
-              <input
-                type="date"
-                value={formData["QME Report Due Date"] || ""}
-                onChange={(e) =>
-                  handleChange("QME Report Due Date", e.target.value)
-                }
-              />
-            </div>
-            <div className={styles.formGroup}>
-              <label>Panel Issued Date</label>
-              <input
-                type="date"
-                value={formData["Panel Issued Date"] || ""}
-                onChange={(e) =>
-                  handleChange("Panel Issued Date", e.target.value)
-                }
-              />
-            </div>
-          </div>
-
-          <div className={styles.formActions}>
+      {/* Data Table Section */}
+      <div className={styles.tableSection}>
+        <div className={styles.tableControls}>
+          <div className={styles.paginationControls}>
             <button
-              type="button"
-              onClick={onCancel}
-              className={styles.cancelButton}
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
             >
-              Cancel
+              Previous
             </button>
-            <button type="submit" className={styles.saveButton}>
-              {isAdding ? "Add Case" : "Save Changes"}
+            <span>
+              Page {currentPage} of {totalPages || 1} | Total:{" "}
+              {processedData.length} rows
+            </span>
+            <button
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              }
+              disabled={currentPage === totalPages || totalPages === 0}
+            >
+              Next
             </button>
           </div>
-        </form>
+          <div className={styles.rowsPerPage}>
+            <label>
+              Rows per page:
+              <select
+                value={rowsPerPage}
+                onChange={(e) => {
+                  setRowsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+              >
+                {[5, 10, 25, 50, 100].map((size) => (
+                  <option key={size} value={size}>
+                    {size}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div className={styles.tableWrapper}>
+          <table className={styles.dataTable}>
+            <thead>
+              <tr>
+                <th>
+                  <input
+                    type="checkbox"
+                    checked={
+                      selectedRows.size === paginatedData.length &&
+                      paginatedData.length > 0
+                    }
+                    onChange={selectAllRows}
+                    disabled={paginatedData.length === 0}
+                  />
+                </th>
+                {columns.map((key) => (
+                  <th key={key}>
+                    <div className={styles.columnHeader}>
+                      <div className={styles.columnHeaderTop}>
+                        <span onClick={() => requestSort(key)}>
+                          {key} {getSortIndicator(key)}
+                        </span>
+                        <button
+                          onClick={() => handleDeleteColumn(key)}
+                          className={styles.deleteColumnButton}
+                          title="Delete column"
+                        >
+                          ×
+                        </button>
+                      </div>
+                      {data.length > 0 && (
+                        <select
+                          value={filters[key] || ""}
+                          onChange={(e) =>
+                            handleFilterChange(key, e.target.value)
+                          }
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <option value="">All</option>
+                          {getUniqueValues(key).map((value) => (
+                            <option key={value} value={value}>
+                              {value}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {paginatedData.length > 0 ? (
+                paginatedData.map((row, rowIndex) => (
+                  <tr key={rowIndex}>
+                    <td>
+                      <input
+                        type="checkbox"
+                        checked={selectedRows.has(rowIndex)}
+                        onChange={() => toggleRowSelection(rowIndex)}
+                      />
+                    </td>
+                    {columns.map((col) => (
+                      <td
+                        key={col}
+                        onDoubleClick={() =>
+                          handleCellEdit(rowIndex, col, row[col])
+                        }
+                        className={styles.editableCell}
+                      >
+                        {editingCell &&
+                        editingCell.rowIndex === rowIndex &&
+                        editingCell.column === col ? (
+                          <div className={styles.cellEditContainer}>
+                            <input
+                              type="text"
+                              value={editValue}
+                              onChange={(e) => setEditValue(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") handleCellSave();
+                                if (e.key === "Escape") handleCellCancel();
+                              }}
+                              autoFocus
+                              className={styles.cellEditInput}
+                            />
+                            <div className={styles.cellEditButtons}>
+                              <button
+                                onClick={handleCellSave}
+                                className={styles.cellSaveButton}
+                              >
+                                ✓
+                              </button>
+                              <button
+                                onClick={handleCellCancel}
+                                className={styles.cellCancelButton}
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <span title="Double-click to edit">{row[col]}</span>
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={columns.length + 1} className={styles.noData}>
+                    {columns.length === 0
+                      ? "No columns defined. Click 'Add Column' to get started."
+                      : "No data available. Click 'Add Row' to add data or upload an Excel file."}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

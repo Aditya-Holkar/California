@@ -1,292 +1,200 @@
-/* components/WordEditor/WordEditor.module.css */
-.container {
-  max-width: 1000px;
-  margin: 0 auto;
+.main {
+  font-family: "Segoe UI", Arial, sans-serif;
+  background-color: #f8f9fb;
+  padding: 40px;
+  min-height: 100vh;
+  color: #222;
+}
+
+.heading {
+  font-size: 26px;
+  font-weight: 700;
+  color: #222;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #ccc;
+  padding-bottom: 8px;
+}
+
+/* Input Section */
+.input_section {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  background-color: #fff;
   padding: 20px;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  color: #333;
-}
-
-.uploadSection {
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
   margin-bottom: 30px;
-  text-align: center;
 }
 
-.uploadSection h2 {
-  color: #2c3e50;
-  margin-bottom: 20px;
-  font-size: 28px;
-}
-
-.uploadArea {
-  margin-bottom: 20px;
-}
-
-.fileInput {
-  display: none;
-}
-
-.fileInputLabel {
-  display: block;
-  border: 2px dashed #bdc3c7;
-  border-radius: 8px;
-  padding: 40px 20px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.fileInputLabel:hover {
-  border-color: #3498db;
-  background-color: #f8f9fa;
-}
-
-.uploadContent {
+.input_group {
   display: flex;
   flex-direction: column;
-  align-items: center;
 }
 
-.uploadIcon {
-  font-size: 48px;
-  margin-bottom: 15px;
-}
-
-.uploadText {
-  font-size: 18px;
+.label {
+  font-size: 13px;
   font-weight: 600;
-  margin-bottom: 8px;
-  color: #2c3e50;
+  color: #555;
+  text-transform: capitalize;
 }
 
-.uploadSubtext {
-  font-size: 14px;
-  color: #7f8c8d;
-}
-
-.fileInfo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 12px 20px;
-  background-color: #e8f4fc;
+.input {
+  padding: 8px;
+  font-size: 13px;
+  border: 1px solid #ccc;
   border-radius: 6px;
-  margin-top: 15px;
+  margin-top: 5px;
 }
 
-.fileIcon {
-  margin-right: 10px;
-  font-size: 20px;
+.input:focus {
+  outline: none;
+  border-color: #0070f3;
+  box-shadow: 0 0 3px #0070f3;
 }
 
-.fileName {
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 25px;
+}
+
+.tab_button {
+  background-color: #e9ecef;
+  color: #333;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 6px;
   font-weight: 500;
+  cursor: pointer;
+  transition: 0.2s;
 }
 
-.replacementsSection,
-.editorSection {
+.tab_button:hover {
+  background-color: #d4dae0;
+}
+
+.active_tab {
+  background-color: #0070f3;
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Templates Section */
+.templates_section,
+.tasks_section {
+  background-color: #fff;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
   margin-bottom: 30px;
 }
 
-.sectionCard {
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  padding: 24px;
-}
-
-.sectionCard h3 {
-  color: #2c3e50;
-  margin-top: 0;
-  margin-bottom: 15px;
-  font-size: 22px;
-}
-
-.sectionHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #ecf0f1;
-}
-
-.helpText {
-  color: #7f8c8d;
-  font-size: 14px;
-  margin-bottom: 20px;
-}
-
-.replacementRow {
-  display: flex;
-  gap: 15px;
-  margin-bottom: 20px;
-  align-items: flex-end;
-}
-
-.inputGroup {
-  flex: 1;
-}
-
-.inputLabel {
-  display: block;
+.subheading {
+  font-size: 20px;
   font-weight: 600;
-  margin-bottom: 8px;
-  color: #34495e;
-  font-size: 14px;
+  color: #222;
+  margin-bottom: 15px;
 }
 
-.textInput {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #bdc3c7;
-  border-radius: 4px;
-  font-size: 14px;
-  transition: border-color 0.3s;
-}
-
-.textInput:focus {
-  outline: none;
-  border-color: #3498db;
-  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
-}
-
-.removeButton {
-  padding: 10px 16px;
-  background-color: #e74c3c;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.3s;
-  white-space: nowrap;
-  height: fit-content;
-}
-
-.removeButton:hover:not(:disabled) {
-  background-color: #c0392b;
-}
-
-.removeButton:disabled {
-  background-color: #95a5a6;
-  cursor: not-allowed;
-}
-
-.buttonGroup {
-  display: flex;
-  gap: 15px;
-  margin-top: 10px;
-}
-
-.addButton {
-  padding: 12px 20px;
-  background-color: #2ecc71;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: background-color 0.3s;
-}
-
-.addButton:hover {
-  background-color: #27ae60;
-}
-
-.applyButton {
-  padding: 12px 24px;
-  background-color: #3498db;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: background-color 0.3s;
-}
-
-.applyButton:hover {
-  background-color: #2980b9;
-}
-
-.clearButton {
-  padding: 8px 16px;
-  background-color: #95a5a6;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.3s;
-}
-
-.clearButton:hover {
-  background-color: #7f8c8d;
-}
-
-.editorHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.template_box {
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  background-color: #fdfdfd;
   margin-bottom: 20px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #ecf0f1;
+  padding: 18px;
+  transition: box-shadow 0.2s;
 }
 
-.downloadButton {
-  padding: 12px 24px;
-  background-color: #9b59b6;
+.template_box:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.copy_buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.copy_button {
+  background-color: #0070f3;
   color: white;
   border: none;
-  border-radius: 4px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: background-color 0.3s;
+  position: relative;
+  overflow: hidden;
 }
 
-.downloadButton:hover {
-  background-color: #8e44ad;
+.copy_button:hover {
+  background-color: #005ad3;
 }
 
-.editor {
-  min-height: 400px;
-  border: 1px solid #bdc3c7;
+.copy_button.copied::after {
+  content: "Copied!";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 12px;
+  color: white;
+  background-color: #28a745;
+  padding: 3px 8px;
   border-radius: 4px;
-  padding: 20px;
-  font-size: 16px;
-  line-height: 1.6;
-  outline: none;
-  overflow-y: auto;
-  max-height: 600px;
+  animation: fadeOut 1.5s ease-in-out forwards;
+}
+
+@keyframes fadeOut {
+  0% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.template_subject {
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.template_body {
   white-space: pre-wrap;
+  font-family: "Courier New", monospace;
+  font-size: 13px;
+  color: #333;
+  background-color: #f9fafb;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #eee;
 }
 
-.editor:focus {
-  border-color: #3498db;
-  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+/* Tasks */
+.task_item {
+  background-color: #f4f8ff;
+  border-left: 4px solid #0070f3;
+  padding: 14px 18px;
+  border-radius: 8px;
+  margin-bottom: 12px;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .container {
-    padding: 15px;
-  }
+.task_title {
+  font-weight: 600;
+  color: #222;
+  margin-bottom: 6px;
+}
 
-  .replacementRow {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .buttonGroup {
-    flex-direction: column;
-  }
-
-  .editorHeader,
-  .sectionHeader {
-    flex-direction: column;
-    gap: 15px;
-    align-items: flex-start;
-  }
+.task_body {
+  white-space: pre-wrap;
+  font-family: "Courier New", monospace;
+  font-size: 13px;
+  color: #333;
 }

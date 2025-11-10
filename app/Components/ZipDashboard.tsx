@@ -16,17 +16,6 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  LineChart,
-  Line,
-  AreaChart,
-  Area,
-  RadarChart,
-  Radar,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  ComposedChart,
-  Scatter,
 } from "recharts";
 import styles from "../styles/Zip.module.css";
 

@@ -81,7 +81,9 @@ export default function Home() {
         <Link href="/Zip" className={styles.link}>
           Zip Code Search
         </Link>
-
+        <Link href="/Temp" className={styles.link}>
+          Templates
+        </Link>
         {/* <Link href="/Visualize" className={styles.link}>
           Dashboards
         </Link> */}

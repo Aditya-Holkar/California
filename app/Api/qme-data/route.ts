@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // app/api/qme-data/route.ts
 import { NextResponse } from "next/server";
 
@@ -16,30 +17,65 @@ export async function POST(request: Request) {
       );
     }
 
-    // Use the URL as-is
-    const csvUrl = sheetUrl.includes("output=csv")
-      ? sheetUrl
-      : `${sheetUrl}${sheetUrl.includes("?") ? "&" : "?"}output=csv`;
+    // Ensure the URL has output=csv parameter
+    let csvUrl = sheetUrl;
+    if (!csvUrl.includes("output=csv")) {
+      csvUrl = sheetUrl.includes("?")
+        ? `${sheetUrl}&output=csv`
+        : `${sheetUrl}?output=csv`;
+    }
 
     console.log("Fetching from:", csvUrl);
 
-    const response = await fetch(csvUrl);
+    const response = await fetch(csvUrl, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        Accept: "text/csv,application/csv",
+      },
+      // Add timeout for production
+      signal: AbortSignal.timeout(10000), // 10 second timeout
+    });
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      console.error(
+        "Sheet response status:",
+        response.status,
+        response.statusText
+      );
+
+      if (response.status === 403) {
+        throw new Error(
+          "Sheet access forbidden. Please ensure the sheet is published to web: File > Share > Publish to web > CSV format"
+        );
+      } else if (response.status === 404) {
+        throw new Error("Sheet not found. Please check the URL.");
+      } else {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
     }
 
     const csvData = await response.text();
 
-    if (csvData.includes("<html") || csvData.trim().length === 0) {
+    // Check if we got HTML instead of CSV (common auth issue)
+    if (
+      csvData.includes("<html") ||
+      csvData.includes("Google Docs") ||
+      csvData.trim().startsWith("<!DOCTYPE")
+    ) {
       throw new Error(
-        "Invalid response - sheet may not be published correctly"
+        'Sheet returned authentication page. Please ensure the sheet is publicly accessible via "Publish to web".'
       );
+    }
+
+    // Check if CSV is empty
+    if (csvData.trim().length === 0) {
+      return NextResponse.json({ data: [], message: "Sheet is empty" });
     }
 
     const rows = csvData.split("\n").filter((row) => row.trim().length > 0);
     if (rows.length < 2) {
-      return NextResponse.json({ data: [], message: "No data found in sheet" });
+      return NextResponse.json({ data: [], message: "No data rows found" });
     }
 
     const headers = rows[0]
@@ -62,18 +98,55 @@ export async function POST(request: Request) {
       }
     }
 
-    // Return debug information
-    return NextResponse.json({
-      data,
-      headers, // Send back the actual headers from your sheet
-      sampleRow: data[0] || {}, // Send first row for debugging
-      message: `Loaded ${data.length} cases successfully`,
-    });
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return NextResponse.json(
+      {
+        data,
+        message: `Loaded ${data.length} cases successfully`,
+      },
+      {
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        },
+      }
+    );
+  } catch (error: any) {
+    console.error("API Error:", error);
+
+    let errorMessage = "Failed to fetch sheet data";
+    if (error.name === "TimeoutError") {
+      errorMessage = "Request timeout - sheet took too long to respond";
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+
+    return NextResponse.json(
+      {
+        error: errorMessage,
+        help: "Ensure your Google Sheet is published: File > Share > Publish to web > Entire Document > CSV",
+      },
+      {
+        status: 500,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        },
+      }
+    );
   }
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    },
+  });
 }
 
 export const runtime = "edge";
